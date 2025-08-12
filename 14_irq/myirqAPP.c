@@ -8,22 +8,17 @@
 #include <string.h>
 
 /*
-* ./timerAPP <filename>      
-* ./timerAPP /dev/timer   读取定时器值                       
+* ./myirqAPP <filename>      
+* ./myirqAPP /dev/myirqdev                         
 */
-
-#define CLOSE_CMD       _IO(0xEF, 1) // 关闭定时器  0xEF 自定义幻数
-#define OPEN_CMD        _IO(0xEF, 2) // 打开定时器
-#define SETPERIOD_CMD   _IOW(0xEF, 3, int) // 设置定时器周期
 
 int main(int argc, char *argv[]){
     int fd = 0;
     int ret = 0;
     char *filename = NULL;
-    unsigned char databuf[1];
+    unsigned char data;
     unsigned int cmd = 0;
     unsigned int arg = 0;
-    unsigned char str[100];
 
     if(argc != 2){
         printf("Usage: %s <filename>\n", argv[0]);
@@ -40,29 +35,13 @@ int main(int argc, char *argv[]){
 
     /* circle read */
     while(1){
-        printf("input cmd");
-        ret = scanf("%d", &cmd);
-        if(ret != 1){
-            fgets(str, sizeof(str), stdin);      // 防止卡死
-        }
-
-        if(cmd == 1){
-            ioctl(fd, CLOSE_CMD, &arg); // 关闭定时器
-        }
-        else if(cmd == 2){
-            ioctl(fd, OPEN_CMD, &arg); // 打开定时器
-        }
-        else if(cmd == 3){
-            printf("input period(ms):");
-            ret = scanf("%d", &arg);
-            if(ret != 1){
-                fgets(str, sizeof(str), stdin); // 防止卡死
+        ret = read(fd, &data, sizeof(data)); // 读取按键值
+        if(ret < 0){
+            // 并不是错误处理，而是按键没有生效的情况
+        } else {
+            if(data){
+                printf("keyvalue = %#x\n", data);
             }
-            ioctl(fd, SETPERIOD_CMD, &arg); // 设置定时器周期
-        }
-        else{
-            printf("Invalid command\n");
-            continue;
         }
     }
 

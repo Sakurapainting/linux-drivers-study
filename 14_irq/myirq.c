@@ -68,7 +68,32 @@ static int myirqdev_release(struct inode *inode, struct file *file) {
 static ssize_t myirqdev_read(struct file *file, char __user *buf, size_t count, loff_t *ppos) {
     int ret = 0;
     
+    u8 keyvalue;
+    u8 releasekey;
+    struct myirq_dev *dev = (struct myirq_dev *)file->private_data;
+
+    keyvalue = atomic_read(&dev->keyvalue);
+    releasekey = atomic_read(&dev->releasekey);
+
+    if (releasekey) {       // 有效按键
+        /* 如果 keyvalue = 0x81（1000 0001），keyvalue & 0x80 = 0x80，结果不为0，说明最高位为1。
+           如果 keyvalue = 0x01（0000 0001），keyvalue & 0x80 = 0x00，结果为0，说明最高位为0。*/
+        if(keyvalue & 0x80) {
+            keyvalue &= ~0x80; // 清除最高位
+            ret = copy_to_user(buf, &keyvalue, sizeof(keyvalue)); // 将按键值拷贝到用户空间
+        } else {
+            goto data_error;
+        }
+
+        atomic_set(&dev->releasekey, 0);        // 清零
+    } else {
+        goto data_error;
+    }
+
     return ret;
+
+data_error:
+    return -EINVAL;
 }
 
 static ssize_t myirqdev_write(struct file *file, const char __user *buf, size_t count, loff_t *ppos) {
@@ -99,10 +124,15 @@ static irqreturn_t key0_handler(int irq, void *dev_id) {
 static void timer_func(unsigned long arg) {
     int value = 0;
     struct irq_keydesc *keydesc = (struct irq_keydesc *)arg;
+    struct myirq_dev *dev = container_of(keydesc, struct myirq_dev, irqkey[0]);
+
     value = gpio_get_value(keydesc->gpio);
     if(value == 0) {
+        atomic_set(&dev->keyvalue, keydesc->value);  
         printk("Key %s pressed\n", keydesc->name);
-    } else {
+    } else if(value == 1) {
+        atomic_set(&dev->keyvalue, 0x80 | (keydesc->value));    // 最高位释放 （约定的？）
+        atomic_set(&dev->releasekey, 1);                        // 设置释放标志
         printk("Key %s released\n", keydesc->name);
     }
 }
@@ -237,7 +267,7 @@ static int __init myirqdev_init(void){
 
     // init atomic
     atomic_set(&myirqdev.keyvalue, INVAKEY);
-    atomic_set(&myirqdev.releasekey, INVAKEY);
+    atomic_set(&myirqdev.releasekey, 0);
 
     return 0;
 fail_keyio:
