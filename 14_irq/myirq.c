@@ -46,6 +46,11 @@ struct myirq_dev{
     int major;
     int minor;
     struct irq_keydesc irqkey[KEY_NUM];
+    struct timer_list timer;
+    spinlock_t lock;
+
+    atomic_t keyvalue;
+    atomic_t releasekey;
 };
 
 struct myirq_dev myirqdev;
@@ -82,17 +87,24 @@ static const struct file_operations myirqdev_fops = {
 }; 
 
 static irqreturn_t key0_handler(int irq, void *dev_id) {
-    int value = 0;
-    struct irq_keydesc *dev = (struct irq_keydesc *)dev_id;
+    struct irq_keydesc *keydesc = (struct irq_keydesc *)dev_id;
+    struct myirq_dev *dev = container_of(keydesc, struct myirq_dev, irqkey[0]);
 
-    value = gpio_get_value(dev->gpio);
-    if(value == 0) {
-        printk("Key %s pressed\n", dev->name);
-    }
-    else if(value == 1) {
-        printk("Key %s released\n", dev->name);
-    }
+    dev->timer.data = (volatile unsigned long)keydesc;       // 传递当前按键描述符
+    mod_timer(&dev->timer, jiffies + msecs_to_jiffies(10));// 10ms 消抖
+
     return IRQ_HANDLED;
+}
+
+static void timer_func(unsigned long arg) {
+    int value = 0;
+    struct irq_keydesc *keydesc = (struct irq_keydesc *)arg;
+    value = gpio_get_value(keydesc->gpio);
+    if(value == 0) {
+        printk("Key %s pressed\n", keydesc->name);
+    } else {
+        printk("Key %s released\n", keydesc->name);
+    }
 }
 
 /* key init */
@@ -150,6 +162,11 @@ static int keyio_init(struct myirq_dev *dev) {
         }
     }
      
+    // timer init
+    init_timer(&myirqdev.timer);
+    spin_lock_init(&myirqdev.lock); 
+    myirqdev.timer.function = timer_func;
+
     return 0;
 
 fail_irq:
@@ -218,6 +235,10 @@ static int __init myirqdev_init(void){
         goto fail_keyio;
     }
 
+    // init atomic
+    atomic_set(&myirqdev.keyvalue, INVAKEY);
+    atomic_set(&myirqdev.releasekey, INVAKEY);
+
     return 0;
 fail_keyio:
     device_destroy(myirqdev.class, myirqdev.devid);
@@ -233,6 +254,9 @@ fail_devid:
 
 static void __exit myirqdev_exit(void){
     int i;
+
+    // del timer
+    del_timer_sync(&myirqdev.timer);
 
     for(i = 0; i < KEY_NUM; i++){
         free_irq(myirqdev.irqkey[i].irqnum, &myirqdev.irqkey[i]);
