@@ -35,7 +35,7 @@ int main(int argc, char *argv[]){
 
     /* circle read */
     while(1){
-        ret = read(fd, &data, sizeof(data)); // 读取按键值
+        ret = read(fd, &data, sizeof(data)); // 读取keyvalue
         if(ret < 0){
             // 并不是错误处理，而是按键没有生效的情况
         } else {
