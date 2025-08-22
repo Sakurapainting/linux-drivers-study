@@ -1,60 +1,57 @@
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/fs.h>
-#include <linux/uaccess.h> 
-#include <linux/io.h>
 #include <linux/cdev.h>
 #include <linux/device.h>
+#include <linux/fs.h>
+#include <linux/init.h>
+#include <linux/io.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
 #include <linux/of.h>
 #include <linux/of_address.h>
 #include <linux/of_irq.h>
 #include <linux/slab.h>
+#include <linux/uaccess.h>
 
 static int __init dtsof_init(void)
 {
     int ret = 0;
-    
-    struct device_node *bl_np = NULL;
-    struct property *prop = NULL;
-    const char *str = NULL;
+
+    struct device_node* bl_np = NULL;
+    struct property* prop = NULL;
+    const char* str = NULL;
     u32 def_value = 0;
     u32 elemsize = 0;
-    u32 *brival = NULL;
+    u32* brival = NULL;
     u8 i = 0;
 
     /* 找到backlight 节点 */
     bl_np = of_find_node_by_path("/backlight");
-    if(bl_np == NULL) {
+    if (bl_np == NULL) {
         ret = -ENODEV;
         goto fail_findnp;
     }
 
     /* 获取backlight 节点的属性 */
     prop = of_find_property(bl_np, "compatible", NULL);
-    if(prop == NULL) {
+    if (prop == NULL) {
         ret = -ENODEV;
         goto fail_findprop;
-    }
-    else{
-        printk("compatible = %s\n", (char *)prop->value);
+    } else {
+        printk("compatible = %s\n", (char*)prop->value);
     }
 
     /* 获取backlight 节点的string属性 */
     ret = of_property_read_string(bl_np, "status", &str);
     if (ret < 0) {
         goto fail_readstatus;
-    }
-    else{
+    } else {
         printk("status = %s\n", str);
     }
 
     /* 获取backlight 节点的u32属性 */
     ret = of_property_read_u32(bl_np, "default-brightness-level", &def_value);
-    if(ret < 0){
+    if (ret < 0) {
         goto fail_read32;
-    }
-    else{
+    } else {
         printk("default-brightness-level = %d\n", def_value);
     }
 
@@ -63,8 +60,7 @@ static int __init dtsof_init(void)
     if (elemsize < 0) {
         ret = -EINVAL;
         goto fail_read_elem;
-    }
-    else{
+    } else {
         printk("brightness-levels count = %d\n", elemsize);
     }
 
@@ -76,12 +72,11 @@ static int __init dtsof_init(void)
     }
 
     /* 获取数组 */
-    ret  = of_property_read_u32_array(bl_np, "brightness-levels", brival, elemsize);
-    if(ret < 0) {
+    ret = of_property_read_u32_array(bl_np, "brightness-levels", brival, elemsize);
+    if (ret < 0) {
         goto fail_read_array;
-    }
-    else{
-        for(i = 0; i < elemsize; i++) {
+    } else {
+        for (i = 0; i < elemsize; i++) {
             printk("brightness-levels[%d] = %d\n", i, brival[i]);
         }
     }
@@ -108,7 +103,6 @@ fail_findnp:
 
 static void __exit dtsof_exit(void)
 {
-
 }
 
 module_init(dtsof_init);

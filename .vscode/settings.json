@@ -15,6 +15,7 @@
         "of_address.h": "c",
         "uaccess.h": "c",
         "type_traits": "c",
-        "utility": "c"
+        "utility": "c",
+        "kernel.h": "c"
     },
 }
