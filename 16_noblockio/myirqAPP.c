@@ -1,22 +1,22 @@
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/ioctl.h>
 #include <fcntl.h>
+#include <poll.h>
 #include <stdio.h>
-#include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/time.h>
+#include <sys/ioctl.h>
 #include <sys/select.h>
-#include <poll.h>
-
+#include <sys/stat.h>
+#include <sys/time.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 /*
-* ./myirqAPP <filename>      
-* ./myirqAPP /dev/myirqdev                         
-*/
+ * ./myirqAPP <filename>
+ * ./myirqAPP /dev/myirqdev
+ */
 
-int main(int argc, char *argv[]){
+int main(int argc, char* argv[])
+{
     int fd = 0;
     int ret = 0;
 #if 0
@@ -25,12 +25,12 @@ int main(int argc, char *argv[]){
 #endif
     struct pollfd fds;
 
-    char *filename = NULL;
+    char* filename = NULL;
     unsigned char data;
     unsigned int cmd = 0;
     unsigned int arg = 0;
 
-    if(argc != 2){
+    if (argc != 2) {
         printf("Usage: %s <filename>\n", argv[0]);
         return -1;
     }
@@ -38,13 +38,13 @@ int main(int argc, char *argv[]){
     filename = argv[1]; // 获取设备文件名
 
     fd = open(filename, O_RDWR | O_NONBLOCK); // 非阻塞 打开KEY设备文件
-    if(fd < 0){
+    if (fd < 0) {
         printf("open %s failed\n", filename);
         return -1;
     }
 
     /* circle read */
-    while(1){
+    while (1) {
 
 #if 0
         FD_ZERO(&readfds);                      // 清空读文件描述符集合
@@ -81,17 +81,17 @@ int main(int argc, char *argv[]){
                 break;
         }
 #endif
-        if(ret == 0) {          // timeout
+        if (ret == 0) { // timeout
             // 轮询之外可以做其他事情
-        } else if(ret < 0) {    // error
+        } else if (ret < 0) { // error
             perror("poll");
         } else {
-            if(fds.revents | POLLIN) {  // 可读取
-                ret = read(fd, &data, sizeof(data));    // 读取keyvalue
-                if(ret < 0) {
+            if (fds.revents | POLLIN) { // 可读取
+                ret = read(fd, &data, sizeof(data)); // 读取keyvalue
+                if (ret < 0) {
                     // 并不是错误处理，而是按键没有生效的情况
                 } else {
-                    if(data) {
+                    if (data) {
                         printf("keyvalue = %#x\n", data);
                     }
                 }
@@ -100,6 +100,6 @@ int main(int argc, char *argv[]){
     }
 
     close(fd); // 关闭设备文件
-    
+
     return 0;
 }
