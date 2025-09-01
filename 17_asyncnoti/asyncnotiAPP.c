@@ -65,14 +65,14 @@ int main(int argc, char* argv[])
     flags = fcntl(fd, F_GETFL);
     fcntl(fd, F_SETFL, flags | FASYNC);
 
-    close(fd); // 关闭设备文件
-
     printf("Waiting for key events... Press Ctrl+C to exit\n");
     
     // 保持程序运行，等待异步信号
     while (1) {
         sleep(1);
     }
-    
+
+    close(fd); // 关闭设备文件
+
     return 0;
 }
