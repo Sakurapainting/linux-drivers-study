@@ -159,9 +159,7 @@ static void timer_func(unsigned long arg)
     }
 
     if(atomic_read(&dev->releasekey)) {     // 有效的按键过程
-        if(dev->fasync) {       // 有进程注册
-            kill_fasync(&dev->fasync, SIGIO, POLL_IN);
-        } 
+        kill_fasync(&dev->fasync, SIGIO, POLL_IN);
     }
 }
 
