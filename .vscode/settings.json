@@ -17,6 +17,7 @@
         "type_traits": "c",
         "utility": "c",
         "kernel.h": "c",
-        "types.h": "c"
+        "types.h": "c",
+        "io.h": "c"
     },
 }
