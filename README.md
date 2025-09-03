@@ -1,9 +1,9 @@
 # Linux 驱动开发学习项目
 
-这是一个基于IMX6ULL ARM开发板（正点原子alpha）的Linux内核驱动开发学习项目。
+这是一个基于IMX6ULL ARM开发板的Linux驱动开发学习项目。
 
-### 硬件平台
-- **开发板**: IMX6ULL ARM Cortex-A7
+### 我的硬件平台（测试可用）
+- **开发板**: IMX6ULL ARM Cortex-A7 正点原子阿尔法
 - **内核版本**: Linux 4.1.15
 - **交叉编译器**: arm-linux-gnueabihf-gcc
 
