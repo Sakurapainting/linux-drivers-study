@@ -25,14 +25,31 @@
 #include <linux/signal.h>
 #include <linux/platform_device.h>
 
-
-
-static int __init leddriver_init(void) {
+static int led_probe(struct platform_device *dev) {
+    printk("led driver probe\n");
     return 0;
 }
 
+static int led_remove(struct platform_device *dev) {
+    printk("led driver remove\n");
+    return 0;
+}
+
+static struct platform_driver leddriver = {
+    .driver = {
+        .name = "imx6ull-led",
+        .owner = THIS_MODULE,
+    },
+    .probe = led_probe,
+    .remove = led_remove,
+};
+
+static int __init leddriver_init(void) {
+    return platform_driver_register(&leddriver);
+}
+
 static void  __exit leddriver_exit(void) {
-    
+    platform_driver_unregister(&leddriver);
 }
 
 module_init(leddriver_init);
