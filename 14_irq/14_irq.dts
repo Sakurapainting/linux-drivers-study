@@ -1,0 +1,13 @@
+/ {
+    key {
+		compatible = "alientek,key";
+		pinctrl-names = "default";
+		pinctrl-0 = <&pinctrl_key>;
+		key-gpios = <&gpio1 18 GPIO_ACTIVE_HIGH>;
+		status = "okay";
+
+        // 新增中断属性
+		interrupt-parent = <&gpio1>;
+		interrupts = <18 IRQ_TYPE_EDGE_BOTH>;
+	};
+};
