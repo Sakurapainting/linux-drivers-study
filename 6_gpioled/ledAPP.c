@@ -8,8 +8,8 @@
 
 /*
  * ./ledAPP <filename> <0:1>      0表示关灯，1表示开灯
- * ./ledAPP /dev/led 0            关灯
- * ./ledAPP /dev/led 1            开灯
+ * ./ledAPP /dev/gpioled 0            关灯
+ * ./ledAPP /dev/gpioled 1            开灯
  */
 
 #define LEDOFF 0 /* 关闭LED */

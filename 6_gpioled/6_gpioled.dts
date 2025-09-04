@@ -1,0 +1,18 @@
+/ {
+	gpioled {
+		compatible = "alientek,gpioled";
+		pinctrl-names = "default";
+		pinctrl-0 = <&pinctrl_gpioled>;
+		led-gpios = <&gpio1 3 GPIO_ACTIVE_LOW>;
+		status = "okay";
+	};
+};
+
+
+&iomuxc {
+	pinctrl_gpioled: ledgrp{
+		fsl,pins = <
+			MX6ULL_PAD_SNVS_TAMPER1__GPIO5_IO01	0x10b0
+		>;
+	};
+};

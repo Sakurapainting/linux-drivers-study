@@ -1,0 +1,17 @@
+/ {
+	beep {
+		compatible = "alientek,beep";
+		pinctrl-names = "default";
+		pinctrl-0 = <&pinctrl_beep>;
+		beep-gpios = <&gpio5 1 GPIO_ACTIVE_HIGH>;
+		status = "okay";
+	};	
+};
+
+&iomuxc {
+	pinctrl_beep: beepgrp{
+		fsl,pins = <
+			MX6UL_PAD_GPIO1_IO03__GPIO1_IO03	0x10b0
+		>;
+	};
+};
