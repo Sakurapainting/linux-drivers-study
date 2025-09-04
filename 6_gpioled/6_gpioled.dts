@@ -1,0 +1,7 @@
+gpioled {
+		compatible = "alientek,gpioled";
+		pinctrl-names = "default";
+		pinctrl-0 = <&pinctrl_gpioled>;
+		led-gpios = <&gpio1 3 GPIO_ACTIVE_LOW>;
+		status = "okay";
+	};
