@@ -22,19 +22,45 @@ make clean
 
 ## 使用方法
 
-### 1. 加载驱动模块
+###
+
+### 1. 设备树使用
+
+仓库根目录下的 `.dts` 和 `.dtb` 是适用于最新章节(chapter)的完整设备树文件
+
+参考u-boot示例
+
+```shell
+env default -a;saveenv 
+setenv ipaddr 192.168.10.50 
+setenv ethaddr 00:04:9f:04:d2:35 
+setenv gatewayip 192.168.10.1 
+setenv netmask 255.255.255.0 
+setenv serverip 192.168.10.100 
+saveenv
+
+setenv bootcmd 'tftp 80800000 zImage;tftp 83000000 imx6ull-alientek-emmc.dtb;bootz 80800000 - 83000000' 
+saveenv 
+
+setenv bootargs 'console=ttymxc0,115200 root=/dev/mmcblk0p1 rootwait rw'
+saveenv
+
+boot
+```
+
+### 2. 加载驱动模块
 ```bash
 depmod
 modprobe driver_name.ko
 ```
 
-### 2. 查看设备信息
+### 3. 查看设备信息
 ```bash
 cat /proc/devices
 ls /dev/
 ```
 
-### 3. 测试驱动
+### 4. 测试驱动
 每个驱动都提供了对应的应用程序（如chrdevbaseAPP、ledAPP等），获取权限后可使用：
 ```bash
 sudo chmod +x driverAPP
@@ -46,7 +72,7 @@ sudo chmod +x driverAPP
 arm-linux-gnueabihf-gcc driverAPP.c -o driverAPP
 ```
 
-### 4. 卸载驱动模块
+### 5. 卸载驱动模块
 ```bash
 rmmod driver_name
 ```
