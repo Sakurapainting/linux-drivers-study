@@ -6,7 +6,7 @@
 		beep-gpios = <&gpio5 1 GPIO_ACTIVE_HIGH>;
 		status = "okay";
 	};	
-}
+};
 
 &iomuxc {
 	pinctrl_beep: beepgrp{
