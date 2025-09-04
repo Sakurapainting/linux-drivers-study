@@ -7,9 +7,9 @@
 #include <unistd.h>
 
 /*
- * ./ledAPP <filename> <0:1>      0表示关灯，1表示开灯
- * ./ledAPP /dev/led 0            关灯
- * ./ledAPP /dev/led 1            开灯
+ * ./ledAPP <filename> <0:1>      0表示关，1表示开
+ * ./ledAPP /dev/beep 0            关
+ * ./ledAPP /dev/beep 1            开
  */
 
 #define LEDOFF 0 /* 关闭LED */

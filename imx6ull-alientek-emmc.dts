@@ -334,14 +334,14 @@
 		/*you led*/
 		pinctrl_gpioled: ledgrp{
 			fsl,pins = <
-				MX6ULL_PAD_SNVS_TAMPER1__GPIO5_IO01	0x10b0
+				MX6UL_PAD_GPIO1_IO03__GPIO1_IO03	0x10b0
 			>;
 		};
 
 		/*you beep*/
 		pinctrl_beep: beepgrp{
 			fsl,pins = <
-				MX6UL_PAD_GPIO1_IO03__GPIO1_IO03	0x10b0
+				MX6ULL_PAD_SNVS_TAMPER1__GPIO5_IO01	0x10b0
 			>;
 		};
 		
