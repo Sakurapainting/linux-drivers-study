@@ -1,0 +1,7 @@
+beep {
+		compatible = "alientek,beep";
+		pinctrl-names = "default";
+		pinctrl-0 = <&pinctrl_beep>;
+		beep-gpios = <&gpio5 1 GPIO_ACTIVE_HIGH>;
+		status = "okay";
+	};
