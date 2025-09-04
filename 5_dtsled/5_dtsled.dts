@@ -1,0 +1,12 @@
+alphaled {
+		#address-cells = <1>;
+		#size-cells = <1>;
+		compatible ="alientek,alphaled";
+		status = "okay";
+		reg = < 0x020c406c 0x04	/*ccm_ccgr1_base*/
+				0x020e0068 0x04 /*sw_mux_gpio1_io03_base*/
+				0x020e02f4 0x04 /*sw_pad_gpio1_io03_base*/
+				0x0209c004 0x04 /*gpio1_gdir_base*/
+				0x0209c000 0x04 /*gpio1_dr_base*/
+			>;
+	};
