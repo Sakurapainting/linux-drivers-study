@@ -89,6 +89,11 @@ rmmod driver_name
 - 文档改进
 - 新功能添加
 
+### 代码格式
+
+本项目使用clang-format来保持 C/C++ 语言代码风格一致。
+
+
 ## 许可证
 
 本项目采用MIT许可证，详见[LICENSE](LICENSE)文件。
