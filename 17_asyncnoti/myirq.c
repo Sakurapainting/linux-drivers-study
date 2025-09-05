@@ -3,6 +3,7 @@
 #include <asm/uaccess.h>
 #include <linux/cdev.h>
 #include <linux/device.h>
+#include <linux/fcntl.h>
 #include <linux/fs.h>
 #include <linux/gpio.h>
 #include <linux/init.h>
@@ -16,13 +17,12 @@
 #include <linux/of_address.h>
 #include <linux/of_gpio.h>
 #include <linux/of_irq.h>
+#include <linux/poll.h>
+#include <linux/signal.h>
 #include <linux/slab.h>
 #include <linux/spinlock.h>
 #include <linux/timer.h>
 #include <linux/uaccess.h>
-#include <linux/fcntl.h>
-#include <linux/poll.h>
-#include <linux/signal.h>
 
 #define MYIRQ_CNT 1
 #define MYIRQ_NAME "myirqdev"
@@ -158,7 +158,7 @@ static void timer_func(unsigned long arg)
         printk("Key %s released\n", keydesc->name);
     }
 
-    if(atomic_read(&dev->releasekey)) {     // 有效的按键过程
+    if (atomic_read(&dev->releasekey)) { // 有效的按键过程
         kill_fasync(&dev->fasync, SIGIO, POLL_IN);
     }
 }
