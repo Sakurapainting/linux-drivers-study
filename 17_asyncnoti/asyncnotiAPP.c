@@ -1,4 +1,5 @@
 #include <fcntl.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -6,26 +7,24 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
-#include <signal.h>
-#include <fcntl.h>
 
 /*
  * ./asyncnotiAPP <filename>
  * ./asyncnotiAPP /dev/myirqdev
  */
 
-static int fd = 0;  // 全局变量，供信号处理函数使用
+static int fd = 0; // 全局变量，供信号处理函数使用
 
 static void sigio_handler(int signum)
 {
     int ret;
     unsigned int keyval = 0;
-    
+
     printf("Received SIGIO signal\n");
-    
+
     // 读取按键数据
     ret = read(fd, &keyval, sizeof(keyval));
-    if (ret <0) {
+    if (ret < 0) {
 
     } else {
         printf("sigio signal Key value = %#x\n", keyval);
@@ -60,13 +59,13 @@ int main(int argc, char* argv[])
 
     // 设置当前进程能够接收SIGIO信号
     fcntl(fd, F_SETOWN, getpid());
-    
+
     // 设置设备文件为异步通知模式
     flags = fcntl(fd, F_GETFL);
     fcntl(fd, F_SETFL, flags | FASYNC);
 
     printf("Waiting for key events... Press Ctrl+C to exit\n");
-    
+
     // 保持程序运行，等待异步信号
     while (1) {
         sleep(1);
