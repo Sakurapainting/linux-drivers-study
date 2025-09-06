@@ -1,0 +1,14 @@
+/ {
+    dtsleds {
+		compatible = "gpio-leds";
+
+		led0 {
+			label = "red";
+			pinctrl-names = "default";
+			pinctrl-0 = <&pinctrl_gpioled>;
+			gpios = <&gpio1 3 GPIO_ACTIVE_LOW>;
+			default-state = "on";
+			linux,default-trigger = "heartbeat";
+		};
+	};
+};
