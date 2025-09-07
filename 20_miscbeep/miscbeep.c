@@ -74,7 +74,6 @@ static ssize_t miscbeep_write(struct file* file, const char __user* buf, size_t 
     return 0;
 }
 
-
 struct file_operations miscbeep_fops = {
     .owner = THIS_MODULE,
     .open = miscbeep_open,
