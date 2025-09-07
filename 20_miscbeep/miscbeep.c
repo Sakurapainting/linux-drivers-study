@@ -25,6 +25,13 @@
 #include <linux/signal.h>
 #include <linux/platform_device.h>
 
+// miscbeep 设备结构体
+struct miscbeep_dev {
+    struct device_node *nd; // 设备节点
+    int beep_gpio;          // 蜂鸣器IO
+};
+
+struct miscbeep_dev miscbeep;
 
 // platform match table
 static const struct of_device_id miscbeep_of_match[] = {
@@ -33,12 +40,49 @@ static const struct of_device_id miscbeep_of_match[] = {
 };
 
 static int miscbeep_probe(struct platform_device *pdev) {
+    int ret = 0;
+    // 初始化蜂鸣器IO
+    miscbeep.nd = pdev->dev.of_node;
+
+    miscbeep.beep_gpio = of_get_named_gpio(miscbeep.nd, "beep-gpios", 0);
+    if(miscbeep.beep_gpio < 0) {
+        ret = -EINVAL;
+        goto fail_findgpio;
+    }
+
+    ret = gpio_request(miscbeep.beep_gpio, "beep-gpios");
+    if(ret) {
+        printk("gpio_request %d failed!\n", miscbeep.beep_gpio);
+        ret = -EINVAL;
+        goto fail_requestgpio;
+    }
+
+    ret = gpio_direction_output(miscbeep.beep_gpio, 1); // 设置GPIO输出，默认关闭蜂鸣器
+    if(ret) {
+        goto fail_setoutput;
+    }
+
+    // 默认关闭蜂鸣器（多余  可去掉）
+    // gpio_set_value(beep.beep_gpio, 1);
+
+
+
+    // misc驱动注册
 
     return 0;
+
+fail_setoutput:
+    gpio_free(miscbeep.beep_gpio);
+fail_requestgpio:
+fail_findgpio:
+    of_node_put(miscbeep.nd);
+    return ret;
 }
 
 static int miscbeep_remove(struct platform_device *pdev) {
-
+    gpio_set_value(miscbeep.beep_gpio, 1); // 确保蜂鸣器关闭
+    gpio_free(miscbeep.beep_gpio);
+    of_node_put(miscbeep.nd);
     return 0;
 }
 
