@@ -52,24 +52,24 @@ static int miscbeep_release(struct inode* inode, struct file* file)
 
 static ssize_t miscbeep_write(struct file* file, const char __user* buf, size_t count, loff_t* ppos)
 {
-    // int ret = 0;
-    // u8 databuf[1];
-    // struct miscbeep_dev* dev = (struct miscbeep_dev*)file->private_data;
+    int ret = 0;
+    u8 databuf[1];
+    struct miscbeep_dev* dev = (struct miscbeep_dev*)file->private_data;
 
-    // ret = copy_from_user(databuf, buf, count); // 从用户空间复制数据到内核空间
-    // if (ret < 0) {
-    //     return -EFAULT;
-    // }
+    ret = copy_from_user(databuf, buf, count); // 从用户空间复制数据到内核空间
+    if (ret < 0) {
+        return -EFAULT;
+    }
 
-    // if (databuf[0] == BEEPON) {
-    //     gpio_set_value(dev->beep_gpio, 0); // 打开蜂鸣器
+    if (databuf[0] == BEEPON) {
+        gpio_set_value(dev->beep_gpio, 0); // 打开蜂鸣器
 
-    // } else if (databuf[0] == BEEPOFF) {
-    //     gpio_set_value(dev->beep_gpio, 1); // 关闭蜂鸣器
+    } else if (databuf[0] == BEEPOFF) {
+        gpio_set_value(dev->beep_gpio, 1); // 关闭蜂鸣器
 
-    // } else {
-    //     return -EINVAL; // 无效参数
-    // }
+    } else {
+        return -EINVAL; // 无效参数
+    }
 
     return 0;
 }
