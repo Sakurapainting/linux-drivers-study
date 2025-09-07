@@ -20,6 +20,7 @@
 #include <linux/spinlock.h>
 #include <linux/timer.h>
 #include <linux/uaccess.h>
+#include <linux/input.h>
 
 #define KEYINPUT_CNT 1
 #define KEYINPUT_NAME "keyinput"
@@ -68,9 +69,13 @@ static void timer_func(unsigned long arg)
     value = gpio_get_value(keydesc->gpio);
     if (value == 0) {
         // 上报按键值
+        input_event(dev->inputdev, EV_KEY, KEY_0, 1); // 按下
+        input_sync(dev->inputdev); // 同步事件
         printk("Key %s pressed\n", keydesc->name);
     } else if (value == 1) {
         // 上报按键值
+        input_event(dev->inputdev, EV_KEY, KEY_0, 0); // 松开
+        input_sync(dev->inputdev); // 同步事件
         printk("Key %s released\n", keydesc->name);
     }
 }
@@ -120,7 +125,7 @@ static int keyio_init(struct keyinput_dev* dev)
     }
 
     dev->irqkey[0].handler = key0_handler;
-    dev->irqkey[0].value = KEY0VALUE;
+    dev->irqkey[0].value = KEY_0;
 
     // interrupt init
     for (i = 0; i < KEY_NUM; i++) {
@@ -166,9 +171,28 @@ static int __init keyinput_init(void)
     }
 
     // 注册 input_dev
-    
+    keyinputdev.inputdev = input_allocate_device();
+    if (!keyinputdev.inputdev) {
+        ret = -ENOMEM;
+        goto fail_inputalloc;
+    }
+
+    keyinputdev.inputdev->name = KEYINPUT_NAME;
+    __set_bit(EV_KEY, keyinputdev.inputdev->evbit); // 支持按键事件  evbit标识能支持什么类型的事件
+    __set_bit(EV_REP, keyinputdev.inputdev->evbit); // 支持按键重复事件
+    __set_bit(KEY_0, keyinputdev.inputdev->keybit); // 按键号 是 按键0
+
+    ret = input_register_device(keyinputdev.inputdev);
+    if (ret) {
+        printk(KERN_ERR "Failed to register input device\n");
+        goto fail_input_register;
+    }
+
     return 0;
 
+fail_input_register:
+    input_free_device(keyinputdev.inputdev);
+fail_inputalloc:
 fail_keyio:
     return ret;
 }
@@ -178,6 +202,8 @@ static void __exit keyinput_exit(void)
     int i;
 
     // 注销 input_dev
+    input_unregister_device(keyinputdev.inputdev);
+    // input_free_device(keyinputdev.inputdev); // unregister 会自动 free
 
     // del timer
     del_timer_sync(&keyinputdev.timer);
