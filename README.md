@@ -30,12 +30,12 @@ Linux_Drivers/
 ├── sync_kernel_files.sh         # 内核文件同步脚本
 ├── README.md                    # 项目说明文档
 ├── LICENSE                      # 许可证文件
-├── xx_xxxdevice_driver/                # 某章节内容
-│   ├── xxx.c             # 驱动源码
-│   ├── xx_xxxdevice_driver.dts         # 设备树片段（示例）
-│   ├── xxxAPP.c              # 测试应用
-│   ├── README.md             # 章节笔记、说明
-│   └── Makefile              # 编译脚本
+├── xx_xxxdevice_driver/         # 某章节内容
+│   ├── xxx.c                    # 驱动源码
+│   ├── xx_xxxdevice_driver.dts  # 设备树片段（示例）
+│   ├── xxxAPP.c                 # 测试应用
+│   ├── README.md                # 章节笔记、说明
+│   └── Makefile                 # 编译脚本
 ```
 
 ### 说明
