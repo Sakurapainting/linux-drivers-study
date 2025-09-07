@@ -113,6 +113,10 @@ rmmod driver_name
 - 文档改进
 - 新功能添加
 
+### PR
+
+请向 `dev` 分支里合并，不要向 `main` 提 PR.
+
 ### 代码格式
 
 本项目使用clang-format来保持 C/C++ 语言代码风格一致。
