@@ -20,6 +20,30 @@ make
 make clean
 ```
 
+## 文件结构
+
+```
+Linux_Drivers/
+├── imx6ull-alientek-emmc.dts    # 完整设备树文件（最新版本）
+├── imx6ull-alientek-emmc.dtb    # 编译后的设备树
+├── zImage                       # Linux内核镜像
+├── sync_kernel_files.sh         # 内核文件同步脚本
+├── README.md                    # 项目说明文档
+├── LICENSE                      # 许可证文件
+├── xx_xxxdevice_driver/                # 某章节内容
+│   ├── xxx.c             # 驱动源码
+│   ├── xx_xxxdevice_driver.dts         # 设备树片段（示例）
+│   ├── xxxAPP.c              # 测试应用
+│   ├── README.md             # 章节笔记、说明
+│   └── Makefile              # 编译脚本
+```
+
+### 说明
+- **根目录文件**: 包含完整的设备树文件和内核镜像，适用于最新的驱动章节
+- **各章节目录**: 每个目录对应一个驱动学习主题，包含驱动源码、测试应用和编译脚本
+- **设备树片段**: 各章节下的`.dts`文件仅为示例片段，需要手动添加到完整设备树中
+- **编译产物**: `.ko`、`.o`、`.mod.c`等文件为编译生成，可通过`make clean`清理
+
 ## 使用方法
 
 ###
