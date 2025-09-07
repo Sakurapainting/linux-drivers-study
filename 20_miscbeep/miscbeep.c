@@ -24,6 +24,10 @@
 #include <linux/poll.h>
 #include <linux/signal.h>
 #include <linux/platform_device.h>
+#include <linux/miscdevice.h>
+
+#define MISCBEEP_NAME "miscbeep"
+#define MISCBEEP_MINOR (144)
 
 // miscbeep 设备结构体
 struct miscbeep_dev {
@@ -32,6 +36,54 @@ struct miscbeep_dev {
 };
 
 struct miscbeep_dev miscbeep;
+
+static int miscbeep_open(struct inode *inode, struct file *file) {
+    file->private_data = &miscbeep; // 将设备结构体指针存储在文件私有数据中
+    return 0;
+}
+
+static int miscbeep_release(struct inode* inode, struct file* file)
+{
+    return 0;
+}
+
+static ssize_t miscbeep_write(struct file* file, const char __user* buf, size_t count, loff_t* ppos)
+{
+    // int ret = 0;
+    // u8 databuf[1];
+    // struct beep_dev* dev = (struct beep_dev*)file->private_data;
+
+    // ret = copy_from_user(databuf, buf, count); // 从用户空间复制数据到内核空间
+    // if (ret < 0) {
+    //     return -EFAULT;
+    // }
+
+    // if (databuf[0] == BEEPON) {
+    //     gpio_set_value(dev->beep_gpio, 0); // 打开蜂鸣器
+
+    // } else if (databuf[0] == BEEPOFF) {
+    //     gpio_set_value(dev->beep_gpio, 1); // 关闭蜂鸣器
+
+    // } else {
+    //     return -EINVAL; // 无效参数
+    // }
+
+    return 0;
+}
+
+
+struct file_operations miscbeep_fops = {
+    .owner = THIS_MODULE,
+    .open = miscbeep_open,
+    .release = miscbeep_release,
+    .write = miscbeep_write,
+};
+
+static struct miscdevice miscbeep_dev = {
+    .minor = MISCBEEP_MINOR,
+    .name = MISCBEEP_NAME,
+    .fops = &miscbeep_fops,
+};
 
 // platform match table
 static const struct of_device_id miscbeep_of_match[] = {
@@ -65,12 +117,16 @@ static int miscbeep_probe(struct platform_device *pdev) {
     // 默认关闭蜂鸣器（多余  可去掉）
     // gpio_set_value(beep.beep_gpio, 1);
 
-
-
     // misc驱动注册
+    ret = misc_register(&miscbeep_dev);
+    if (ret) {
+        printk("misc_register failed!\n");
+        goto fail_register;
+    }
 
     return 0;
 
+fail_register:
 fail_setoutput:
     gpio_free(miscbeep.beep_gpio);
 fail_requestgpio:
@@ -80,6 +136,7 @@ fail_findgpio:
 }
 
 static int miscbeep_remove(struct platform_device *pdev) {
+    misc_deregister(&miscbeep_dev);
     gpio_set_value(miscbeep.beep_gpio, 1); // 确保蜂鸣器关闭
     gpio_free(miscbeep.beep_gpio);
     of_node_put(miscbeep.nd);
