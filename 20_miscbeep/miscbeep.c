@@ -26,13 +26,39 @@
 #include <linux/platform_device.h>
 
 
-static int __init miscbeep_init(void) {
-    
+// platform match table
+static const struct of_device_id miscbeep_of_match[] = {
+    { .compatible = "alientek,beep", },
+    {/* Sentinel */},
+};
+
+static int miscbeep_probe(struct platform_device *pdev) {
+
     return 0;
 }
 
+static int miscbeep_remove(struct platform_device *pdev) {
+
+    return 0;
+}
+
+// platform
+static struct platform_driver miscbeep_driver = {
+    .driver = {
+        .name = "miscbeep",
+        .owner = THIS_MODULE,
+        .of_match_table = of_match_ptr(miscbeep_of_match),  // of_match_ptr 条件编译是否支持设备树
+    },
+    .probe = miscbeep_probe,
+    .remove = miscbeep_remove,
+};
+
+static int __init miscbeep_init(void) {
+    return platform_driver_register(&miscbeep_driver);
+}
+
 static void __exit miscbeep_exit(void) {
-    
+    platform_driver_unregister(&miscbeep_driver);
 }
 
 module_init(miscbeep_init);
