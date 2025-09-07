@@ -54,7 +54,7 @@ static ssize_t miscbeep_write(struct file* file, const char __user* buf, size_t 
 {
     // int ret = 0;
     // u8 databuf[1];
-    // struct beep_dev* dev = (struct beep_dev*)file->private_data;
+    // struct miscbeep_dev* dev = (struct miscbeep_dev*)file->private_data;
 
     // ret = copy_from_user(databuf, buf, count); // 从用户空间复制数据到内核空间
     // if (ret < 0) {
