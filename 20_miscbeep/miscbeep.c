@@ -29,6 +29,9 @@
 #define MISCBEEP_NAME "miscbeep"
 #define MISCBEEP_MINOR (144)
 
+#define BEEPOFF    0
+#define BEEPON     1
+
 // miscbeep 设备结构体
 struct miscbeep_dev {
     struct device_node *nd; // 设备节点
@@ -79,7 +82,7 @@ struct file_operations miscbeep_fops = {
     .write = miscbeep_write,
 };
 
-static struct miscdevice miscbeep_dev = {
+static struct miscdevice beep_miscdev = {
     .minor = MISCBEEP_MINOR,
     .name = MISCBEEP_NAME,
     .fops = &miscbeep_fops,
@@ -118,7 +121,7 @@ static int miscbeep_probe(struct platform_device *pdev) {
     // gpio_set_value(beep.beep_gpio, 1);
 
     // misc驱动注册
-    ret = misc_register(&miscbeep_dev);
+    ret = misc_register(&beep_miscdev);
     if (ret) {
         printk("misc_register failed!\n");
         goto fail_register;
@@ -136,7 +139,7 @@ fail_findgpio:
 }
 
 static int miscbeep_remove(struct platform_device *pdev) {
-    misc_deregister(&miscbeep_dev);
+    misc_deregister(&beep_miscdev);
     gpio_set_value(miscbeep.beep_gpio, 1); // 确保蜂鸣器关闭
     gpio_free(miscbeep.beep_gpio);
     of_node_put(miscbeep.nd);
