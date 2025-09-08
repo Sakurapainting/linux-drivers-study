@@ -81,3 +81,5 @@ fb_info->fbops = &mxsfb_ops;
         优点：颜色精度高，色彩丰富，显示效果好。
         缺点：数据量大，对带宽和存储要求高。
   - 在内核 `${sdk}/Documentation/devicetree/bindings/video/display-timing.txt` 有 `display-timings` 属性配置的说明
+
+**参考屏幕数据手册，我这个是4.3寸 800x480**
