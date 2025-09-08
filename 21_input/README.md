@@ -100,3 +100,13 @@ Key key0 released
 - 按键驱动对应的文件是 `/dev/input/eventX` `(X=0,1,2,3...)` ，应用程序读取这个文件来得到按键信息，也就是按键有没有被按下。
 - 通过 `/dev/input/eventX` 读到的信息是 `input_event` 结构体形式的
 - fix : 按键号code应该是BTN而不是KEY。**KEY是模拟键盘的，BTN才是按钮**
+
+## INPUT子系统驱动 - 内核自带按键驱动程序
+
+- menuconfig配置内核，选中内核自带的KEY驱动程序，然后在.config里就会产生：
+
+```conf
+CONFIG_KEYBOARD_GPIO=y
+```
+
+- 经过查找，内核自带的KEY驱动程序是 `gpio_keys.c` ，这是一个标准的platform驱动，其中，节点名 `gpio_keys`，  `compatible = "gpio-keys"` ，此我们在设备树中添加对应节点时，名字、属性要相同
