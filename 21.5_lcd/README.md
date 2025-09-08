@@ -1,4 +1,6 @@
-#### LCD 驱动 - Framebuffer 设备
+# LCD 驱动
+
+## LCD 驱动 - Framebuffer 设备
 
 把显存抽象后的设备，如 `/dev/fb0` ，允许上层应用程序在图形模式下直接对显示缓冲区进行读写操作，是HAL层（硬件抽象层），用户不用关心硬件层是怎么实施的。这些都由Framebuffer设备驱动完成。
 
@@ -24,7 +26,7 @@
 };
 ```
 
-#### LCD 驱动 - NXP 提供的 LCD 驱动简析
+## LCD 驱动 - NXP 提供的 LCD 驱动简析
 
 - 在nxp给的驱动中，lcd控制器的驱动， `${sdk}/drivers/video/fbdev/mxsfb.c` ,为platform驱动框架，驱动和设备匹配后， `mxsfb_probe` 函数就会执行。
 - 结构体 `mxsfb_info` 
@@ -55,7 +57,7 @@ fb_info->fbops = &mxsfb_ops;
   - 初始化 LCDIF 控制器
 -  `mxsfb_init_fbinfo_dt` 函数会从设备树中读取相关属性信息
 
-#### LCD 驱动 - 驱动编写
+## LCD 驱动 - 驱动编写
 
 - 屏幕引脚设置
   - 将屏幕引脚电气属性改为0x49，也就是修改LCD驱动能力：把 `&pinctrl_lcdif_dat` 和 `&pinctrl_lcdif_ctrl` 里的 `0x79` 改为 `0x49` 
@@ -83,3 +85,4 @@ fb_info->fbops = &mxsfb_ops;
   - 在内核 `${sdk}/Documentation/devicetree/bindings/video/display-timing.txt` 有 `display-timings` 属性配置的说明
 
 **参考屏幕数据手册，我这个是4.3寸 800x480**
+
