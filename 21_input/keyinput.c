@@ -33,7 +33,7 @@
 struct irq_keydesc { // 按键中断描述
     int gpio; // io 编号
     int irqnum; // 中断号
-    u8 value; // 键值
+    u16 value; // 键值
     char name[10];
     irqreturn_t (*handler)(int, void*); // 中断处理函数
 };
@@ -69,12 +69,12 @@ static void timer_func(unsigned long arg)
     value = gpio_get_value(keydesc->gpio);
     if (value == 0) {
         // 上报按键值
-        input_event(dev->inputdev, EV_KEY, KEY_0, 1); // 按下
+        input_event(dev->inputdev, EV_KEY, BTN_0, 1); // 按下
         input_sync(dev->inputdev); // 同步事件
         printk("Key %s pressed\n", keydesc->name);
     } else if (value == 1) {
         // 上报按键值
-        input_event(dev->inputdev, EV_KEY, KEY_0, 0); // 松开
+        input_event(dev->inputdev, EV_KEY, BTN_0, 0); // 松开
         input_sync(dev->inputdev); // 同步事件
         printk("Key %s released\n", keydesc->name);
     }
@@ -125,7 +125,7 @@ static int keyio_init(struct keyinput_dev* dev)
     }
 
     dev->irqkey[0].handler = key0_handler;
-    dev->irqkey[0].value = KEY_0;
+    dev->irqkey[0].value = BTN_0;
 
     // interrupt init
     for (i = 0; i < KEY_NUM; i++) {
@@ -180,7 +180,7 @@ static int __init keyinput_init(void)
     keyinputdev.inputdev->name = KEYINPUT_NAME;
     __set_bit(EV_KEY, keyinputdev.inputdev->evbit); // 支持按键事件  evbit标识能支持什么类型的事件
     __set_bit(EV_REP, keyinputdev.inputdev->evbit); // 支持按键重复事件
-    __set_bit(KEY_0, keyinputdev.inputdev->keybit); // 按键号 是 按键0
+    __set_bit(BTN_0, keyinputdev.inputdev->keybit); // 按键号 是 按键0
 
     ret = input_register_device(keyinputdev.inputdev);
     if (ret) {

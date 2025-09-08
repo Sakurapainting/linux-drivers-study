@@ -42,7 +42,7 @@ int main(int argc, char* argv[])
         if(err > 0) {       // 数据读取成功
             switch(inputevent.type) {
                 case EV_KEY:    // 按键事件
-                    printf("key %d %s\n", inputevent.code, inputevent.value ? "press" : "release");
+                    printf("Key/Button %d %s\n", inputevent.code, inputevent.value ? "press" : "release");
                     break;
                 case EV_SYN:   // 同步事件
                     //printf("EV_SYN\n");
