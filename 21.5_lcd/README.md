@@ -86,3 +86,30 @@ fb_info->fbops = &mxsfb_ops;
 
 **参考屏幕数据手册，我这个是4.3寸 800x480**
 
+## LCD 驱动 - 屏幕测试
+
+- 屏幕终端输出（如果没有，再按一下回车键（上一章把按键设成了回车））：
+
+```bash
+echo hello linux > /dev/tty1
+```
+
+- boot过程输出到LCD屏幕，修改 `/etc/inittab` ：
+
+```conf
+#etc/inittab
+::sysinit:/etc/init.d/rcS
+console::askfirst:-/bin/sh
+tty1::askfirst:-/bin/sh
+::restart:/sbin/init
+::ctrlaltdel:/sbin/reboot
+::shutdown:/bin/umount -a -r
+::shutdown:/sbin/swapoff -a
+```
+
+- 然后uboot修改bootargs，就可以在LCD输出终端信息
+
+```shell
+setenv bootargs 'console=tty1 console=ttymxc0,115200 root=/dev/mmcblk0p1 rootwait rw'
+saveenv
+```
