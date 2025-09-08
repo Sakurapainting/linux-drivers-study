@@ -174,7 +174,7 @@
 		compatible = "alientek,key";
 		pinctrl-names = "default";
 		pinctrl-0 = <&pinctrl_key>;
-		key-gpios = <&gpio1 18 GPIO_ACTIVE_HIGH>;
+		key-gpios = <&gpio1 18 GPIO_ACTIVE_LOW>;
 		status = "okay";
 		interrupt-parent = <&gpio1>;
 		interrupts = <18 IRQ_TYPE_EDGE_BOTH>;
@@ -190,6 +190,22 @@
 			gpios = <&gpio1 3 GPIO_ACTIVE_LOW>;
 			default-state = "on";
 			linux,default-trigger = "heartbeat";
+		};
+	};
+
+	gpio_keys {
+		compatible = "gpio-keys";
+		#address-cells = <1>;
+		#size-cells = <0>;
+		autorepeat;
+
+		pinctrl-names = "default";
+		pinctrl-0 = <&pinctrl_key>;
+
+		key0 {
+			label = "GPIO KEY ENTER";
+			linux,code = <KEY_ENTER>;
+			gpios = <&gpio1 18 GPIO_ACTIVE_LOW>;
 		};
 	};
 };
