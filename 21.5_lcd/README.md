@@ -86,6 +86,38 @@ fb_info->fbops = &mxsfb_ops;
 
 **参考屏幕数据手册，我这个是4.3寸 800x480**
 
+## LCD 驱动 - 背光
+
+- 一般屏幕背光用pwm控制
+- 一般测试屏幕的时候直接将背光引脚拉高或拉低
+- 在 `/sys/devices/platform/backlight/backlight/backlight` 里，可以用cat查看亮度， `brightness` 是当前屏幕亮度， `max_brightness` 是最大屏幕亮度
+- 可以通过echo调节背光亮度
+
+```bash
+/sys/devices/platform/backlight/backlight/backlight # echo 7 > brightness 
+/sys/devices/platform/backlight/backlight/backlight # echo 1 > brightness 
+/sys/devices/platform/backlight/backlight/backlight # echo 6 > brightness 
+```
+
+- 设备树中，在根节点下有个 `backlight` 节点
+
+```c
+`   backlight {
+		compatible = "pwm-backlight";
+		pwms = <&pwm1 0 5000000>;
+		brightness-levels = <0 4 8 16 32 64 128 255>;
+		default-brightness-level = <6>;
+		status = "okay";
+	};
+```
+
+- 可以关闭10分钟熄屏功能，找到 `${sdk}/drivers/tty/vt/vt.c` ，找到 `blankinterval` 变量，改为0即可关闭：
+
+```c
+// static int blankinterval = 10*60;
+static int blankinterval = 0;
+```
+
 ## LCD 驱动 - 屏幕测试
 
 - 屏幕终端输出（如果没有，再按一下回车键（上一章把按键设成了回车））：
