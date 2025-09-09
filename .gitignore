@@ -17,6 +17,8 @@
 
 !*APP
 
+!*.dtsi
+
 !Makefile
 !zImage
 !LICENSE
