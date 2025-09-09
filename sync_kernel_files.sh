@@ -12,4 +12,7 @@ cp "$KERNEL_DIR/dts/imx6ull-alientek-emmc.dtb" ./imx6ull-alientek-emmc.dtb
 # 复制 zImage
 cp "$KERNEL_DIR/zImage" ./zImage
 
-echo "dts, dtb, zImage 已复制到当前目录"
+# 复制 imx6ull.dtsi
+cp "$KERNEL_DIR/dts/imx6ull.dtsi" ./imx6ull.dtsi
+
+echo "dts, dtb, zImage, imx6ull.dtsi 已复制到当前目录"
