@@ -18,6 +18,7 @@
         "utility": "c",
         "kernel.h": "c",
         "types.h": "c",
-        "io.h": "c"
+        "io.h": "c",
+        "input.h": "c"
     },
 }
