@@ -24,12 +24,108 @@
 #include <linux/i2c.h>
 #include "ap3216creg.h"
 
-static int ap3216c_probe(struct i2c_client* client, const struct i2c_device_id* id){
-    printk("ap3216c_probe!\n");
+#define AP3216C_CNT 1
+#define AP3216C_NAME "ap3216c"
+
+struct ap3216c_dev {
+    dev_t devid;            // 设备号
+    int major;              // 主设备号
+    int minor;              // 次设备号
+    struct cdev cdev;       // 字符设备
+    struct class* class;    // 类
+    struct device* device;  // 设备
+    struct device_node* nd; // 设备节点
+    int led_gpio;           // led所使用的GPIO编号
+};
+
+static struct ap3216c_dev ap3216cdev;
+
+static int ap3216c_open(struct inode* inode, struct file* file)
+{
+    file->private_data = &ap3216cdev;
+    printk("ap3216c_open!\n");
     return 0;
 }
 
+static ssize_t ap3216c_read(struct file* file, char __user* buf, size_t cnt, loff_t* offt)
+{
+    printk("ap3216c_read!\n");
+    return 0;
+}
+
+static int ap3216c_release(struct inode* inode, struct file* file)
+{
+    // struct ap3216c_dev* dev = (struct ap3216c_dev*)file->private_data;
+    printk("ap3216c_release!\n");
+    return 0;
+}
+
+static const struct file_operations ap3216c_fops = {
+    .owner = THIS_MODULE,
+    .open = ap3216c_open,
+    .read = ap3216c_read,
+    .release = ap3216c_release,
+};
+
+static int ap3216c_probe(struct i2c_client* client, const struct i2c_device_id* id){
+    int ret = 0;    
+
+    printk("ap3216c_probe!\n");
+
+    // device id
+    ap3216cdev.major = 0;
+    if (ap3216cdev.major) {
+        ap3216cdev.devid = MKDEV(ap3216cdev.major, 0);
+        register_chrdev_region(ap3216cdev.devid, AP3216C_CNT, AP3216C_NAME);
+    } else {
+        alloc_chrdev_region(&ap3216cdev.devid, 0, AP3216C_CNT, AP3216C_NAME);
+        ap3216cdev.major = MAJOR(ap3216cdev.devid);
+        ap3216cdev.minor = MINOR(ap3216cdev.devid);
+    }
+    if (ret < 0) {
+        goto fail_devid;
+    }
+    printk("ap3216cdev major=%d, minor=%d\n", ap3216cdev.major, ap3216cdev.minor);
+
+    // cdev
+    ap3216cdev.cdev.owner = THIS_MODULE;
+    cdev_init(&ap3216cdev.cdev, &ap3216c_fops);
+    ret = cdev_add(&ap3216cdev.cdev, ap3216cdev.devid, AP3216C_CNT);
+    if (ret < 0) {
+        goto fail_cdev;
+    }
+
+    // class
+    ap3216cdev.class = class_create(THIS_MODULE, AP3216C_NAME);
+    if (IS_ERR(ap3216cdev.class)) {
+        ret = PTR_ERR(ap3216cdev.class);
+        goto fail_class;
+    }
+
+    // device
+    ap3216cdev.device = device_create(ap3216cdev.class, NULL, ap3216cdev.devid, NULL, AP3216C_NAME);
+    if (IS_ERR(ap3216cdev.device)) {
+        ret = PTR_ERR(ap3216cdev.device);
+        goto fail_device;
+    }
+
+    return 0;
+
+fail_device:
+    class_destroy(ap3216cdev.class);
+fail_class:
+    cdev_del(&ap3216cdev.cdev); // 删除字符设备
+fail_cdev:
+    unregister_chrdev_region(ap3216cdev.devid, AP3216C_CNT);
+fail_devid:
+    return ret;
+}
+
 static int ap3216c_remove(struct i2c_client* client){
+    cdev_del(&ap3216cdev.cdev);
+    unregister_chrdev_region(ap3216cdev.devid, AP3216C_CNT);
+    device_destroy(ap3216cdev.class, ap3216cdev.devid);
+    class_destroy(ap3216cdev.class);
     return 0;
 }
 
