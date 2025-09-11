@@ -17,7 +17,7 @@ int main(int argc, char* argv[])
 {
     int fd = 0;
     int err = 0;
-    int data = 0;
+    unsigned short data[3] = {0};
     char* filename = NULL;
 
     if (argc != 2) {
@@ -33,7 +33,13 @@ int main(int argc, char* argv[])
         return -1;
     }
 
-    err = read(fd, &data, sizeof(data)); // 读取按键事件
+    while(1) {
+        err = read(fd, data, sizeof(data)); // 读取传感器数据
+        if (err > 0) {
+            printf("AP3216C IR = %d, ALS = %d, PS = %d\n", data[0], data[1], data[2]);
+        }
+        usleep(200000); // 200ms
+    }
 
     close(fd); // 关闭设备文件
 
