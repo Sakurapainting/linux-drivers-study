@@ -9,20 +9,16 @@
 #include <linux/input.h>
 
 /*
- * ./keyinputAPP <filename>
- * ./keyinputAPP /dev/input/event1
+ * ./ap3216cAPP <filename>
+ * ./ap3216cAPP /dev/ap3216c
  */
-
-static struct input_event inputevent;
 
 int main(int argc, char* argv[])
 {
     int fd = 0;
     int err = 0;
+    int data = 0;
     char* filename = NULL;
-    unsigned char data;
-    unsigned int cmd = 0;
-    unsigned int arg = 0;
 
     if (argc != 2) {
         printf("Usage: %s <filename>\n", argv[0]);
@@ -37,23 +33,7 @@ int main(int argc, char* argv[])
         return -1;
     }
 
-    while(1) {
-        err = read(fd, &inputevent, sizeof(inputevent)); // 读取按键事件
-        if(err > 0) {       // 数据读取成功
-            switch(inputevent.type) {
-                case EV_KEY:    // 按键事件
-                    printf("Key/Button %d %s\n", inputevent.code, inputevent.value ? "press" : "release");
-                    break;
-                case EV_SYN:   // 同步事件
-                    //printf("EV_SYN\n");
-                    break;
-                default:
-                    break;
-            }
-        } else {
-            printf("read key error\n");
-        }
-    }
+    err = read(fd, &data, sizeof(data)); // 读取按键事件
 
     close(fd); // 关闭设备文件
 
