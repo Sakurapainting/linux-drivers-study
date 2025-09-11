@@ -114,33 +114,40 @@ static int ap3216c_write_reg(struct ap3216c_dev* dev, u8 reg, u8 val)
 }
 
 // ap3216c 数据读取
-void ap3216c_readdata(struct ap3216c_dev* dev)
+static int ap3216c_readdata(struct ap3216c_dev* dev)
 {
-    u8 data[6];
+    unsigned char i = 0;
+    unsigned char buf[6];
+    int ret = 0;
     
-    ap3216c_read_regs(dev, AP3216C_IRDATALOW, data, 6);
-
-    // IR 数据处理（检查有效性）
-    if (data[1] & 0x80) {  // 检查 bit 15（高字节的 bit 7）
-        dev->ir = 0;       // IR 数据无效，设为 0
-    } else {
-        dev->ir = ((data[1] & 0x3F) << 8) | data[0];  // 只取低 14 位
-    }
-    
-    // ALS 数据（通常总是有效的）
-    dev->als = (data[3] << 8) | data[2];
-    
-    // PS 数据处理（检查有效性和干扰）
-    if (data[5] & 0x80) {  // 检查 bit 15（高字节的 bit 7）
-        dev->ps = 0;       // PS 数据无效，设为 0
-    } else {
-        dev->ps = ((data[5] & 0x3F) << 8) | data[4];  // 只取低 14 位
-        
-        // 检查红外干扰标志（可选）
-        if (data[5] & 0x40) {  // 检查 bit 14（高字节的 bit 6）
-            printk("PS data may be affected by IR interference\n");
+    /* 循环读取所有传感器数据 */
+    for(i = 0; i < 6; i++)
+    {
+        ret = ap3216c_read_reg(dev, AP3216C_IRDATALOW + i, &buf[i]);
+        if (ret < 0) {
+            printk("Failed to read register 0x%02x\n", AP3216C_IRDATALOW + i);
+            return ret;
         }
     }
+
+    /* IR数据处理 */
+    if(buf[0] & 0X80) {      /* IR_OF 位为 1,则数据无效 */
+        dev->ir = 0;
+    } else {                 /* 读取 IR 传感器的数据 */
+        dev->ir = ((unsigned short)buf[1] << 2) | (buf[0] & 0X03);
+    }
+
+    /* ALS 数据 */
+    dev->als = ((unsigned short)buf[3] << 8) | buf[2];
+
+    /* PS数据处理 */
+    if(buf[4] & 0x40) {      /* IR_OF 位为 1,则数据无效 */
+        dev->ps = 0;
+    } else {                 /* 读取 PS 传感器的数据 */
+        dev->ps = ((unsigned short)(buf[5] & 0X3F) << 4) | (buf[4] & 0X0F);
+    }
+
+    return 0;
 }
 
 static int ap3216c_open(struct inode* inode, struct file* file)
@@ -164,7 +171,10 @@ static ssize_t ap3216c_read(struct file* file, char __user* buf, size_t cnt, lof
     }
 
     // 读取传感器数据
-    ap3216c_readdata(dev);
+    ret = ap3216c_readdata(dev);
+    if (ret < 0) {
+        return ret;
+    }
 
     data[0] = dev->ir;
     data[1] = dev->als;
