@@ -19,6 +19,7 @@
         "kernel.h": "c",
         "types.h": "c",
         "io.h": "c",
-        "input.h": "c"
+        "input.h": "c",
+        "spinlock.h": "c"
     },
 }

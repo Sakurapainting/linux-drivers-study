@@ -23,6 +23,7 @@
 #include <linux/input.h>
 #include <linux/spi/spi.h>
 #include <linux/delay.h>
+#include "icm20608reg.h"
 
 #define ICM20608_CNT    1
 #define ICM20608_NAME   "icm20608"
@@ -57,6 +58,142 @@ ssize_t icm20608_read(struct file* file, char __user* buf, size_t size, loff_t* 
 static int icm20608_release(struct inode* inode, struct file* file)
 {
     return 0;
+}
+
+// spi 读寄存器
+static int icm20608_read_regs(struct icm20608_dev* dev, u8 reg, void* buf, int len)
+{
+    int ret = 0;
+    u8 txdata[len];
+    struct spi_message m;
+    struct spi_transfer* t;
+    struct spi_device* spi = (struct spi_device*)dev->private_data;
+
+    // 片选拉低
+    gpio_set_value(dev->cs_gpio, 0);
+
+    // 构建spi_transfer
+    t = kzalloc(2 * sizeof(struct spi_transfer), GFP_KERNEL);
+
+    // 1. 发送寄存器地址
+    txdata[0] = reg | 0x80; // 读操作，最高位置1
+    t[0].tx_buf = txdata;
+    t[0].len = 1;
+
+    spi_message_init(&m);
+    spi_message_add_tail(t, &m);
+    ret = spi_sync(spi, &m);
+    if(ret < 0) {
+        printk("icm20608 read regs failed at send reg!\n");
+        goto fail_sync;
+    }
+
+    // 2. 读取数据
+    txdata[0] = 0xFF;       // 发送无意义数据
+    t[0].rx_buf = buf;
+    t[0].len = len;
+
+    spi_message_init(&m);
+    spi_message_add_tail(t, &m);
+    ret = spi_sync(spi, &m);
+    if(ret < 0) {
+        printk("icm20608 read regs failed at read data!\n");
+        goto fail_sync;
+    }
+
+    kfree(t);
+
+    // 片选拉高
+    gpio_set_value(dev->cs_gpio, 1);
+
+    return 0;
+fail_sync:
+    kfree(t);
+    gpio_set_value(dev->cs_gpio, 1);
+    return ret;
+}
+
+// spi 写寄存器
+static int icm20608_write_regs(struct icm20608_dev* dev, u8 reg, void* buf, int len)
+{
+    int ret = 0;
+    u8 txdata[len];
+    struct spi_message m;
+    struct spi_transfer* t;
+    struct spi_device* spi = (struct spi_device*)dev->private_data;
+
+    // 片选拉低
+    gpio_set_value(dev->cs_gpio, 0);
+
+    // 构建spi_transfer
+    t = kzalloc(2 * sizeof(struct spi_transfer), GFP_KERNEL);
+
+    // 1. 发送寄存器地址
+    txdata[0] = reg & ~0x80;
+    t[0].tx_buf = txdata;
+    t[0].len = 1;
+
+    spi_message_init(&m);
+    spi_message_add_tail(t, &m);
+    ret = spi_sync(spi, &m);
+    if(ret < 0) {
+        printk("icm20608 write regs failed at send reg!\n");
+        goto fail_sync;
+    }
+
+    // 2. 发送数据
+    t[0].tx_buf = buf;
+    t[0].len = len;
+
+    spi_message_init(&m);
+    spi_message_add_tail(t, &m);
+    ret = spi_sync(spi, &m);
+    if(ret < 0) {
+        printk("icm20608 write regs failed at read data!\n");
+        goto fail_sync;
+    }
+
+    kfree(t);
+
+    // 片选拉高
+    gpio_set_value(dev->cs_gpio, 1);
+
+    return 0;
+
+fail_sync:
+    kfree(t);
+    gpio_set_value(dev->cs_gpio, 1);
+    return ret;
+}
+
+// icm20608 读取单个寄存器
+static u8 icm20608_read_reg(struct icm20608_dev* dev, u8 reg)
+{
+    u8 val = 0;
+    icm20608_read_regs(dev, reg, &val, 1);
+    return val;
+}
+
+// icm20608 写单个寄存器
+static void icm20608_write_reg(struct icm20608_dev* dev, u8 reg, u8 val)
+{
+    icm20608_write_regs(dev, reg, &val, 1);
+}
+
+// icm20608 init
+void icm20608_init_hw(struct icm20608_dev* dev)
+{
+    u8 value = 0;
+    icm20608_write_reg(dev, ICM20_PWR_MGMT_1, 0X80); // 复位，复位后为0x40，睡眠模式
+    mdelay(50);
+    icm20608_write_reg(dev, ICM20_PWR_MGMT_1, 0X01); // 关闭睡眠，自动选择时钟
+    mdelay(50);
+
+    value = icm20608_read_reg(dev, ICM20_WHO_AM_I);
+    printk("icm20608 id = %#x\n", value);
+
+    value = icm20608_read_reg(dev, ICM20_PWR_MGMT_1);
+    printk("ICM20_PWR_MGMT_1 = %#x\n", value);
 }
 
 static const struct file_operations icm20608_fops = {
@@ -147,6 +284,9 @@ static int icm20608_probe(struct spi_device* spi){
     // 设置icm20608dev私有数据
     icm20608dev.private_data = spi;
 
+    // 初始化icm20608硬件
+    icm20608_init_hw(&icm20608dev);
+
     return 0;
 
 fail_setoutput:
@@ -169,6 +309,8 @@ fail_devid:
 static int icm20608_remove(struct spi_device* spi){
     int ret = 0;
 
+    gpio_free(icm20608dev.cs_gpio);
+    of_node_put(icm20608dev.nd);
     device_destroy(icm20608dev.class, icm20608dev.devid);
     class_destroy(icm20608dev.class);
     cdev_del(&icm20608dev.cdev);
