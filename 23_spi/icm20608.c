@@ -24,16 +24,49 @@
 #include <linux/spi/spi.h>
 #include <linux/delay.h>
 
+static int icm20608_probe(struct spi_device* spi){
+    printk("icm20608_probe!\n");
+    return 0;
+}
+
+static int icm20608_remove(struct spi_device* spi){
+    return 0;
+}
+
+// 传统匹配表
+struct spi_device_id icm20608_idtable[] = {
+    {"invensense,icm20608", 0},
+    {}
+};
+
+// 设备树匹配表
+static const struct of_device_id icm20608_of_match[] = {
+    {.compatible = "invensense,icm20608"},
+    {}
+};
+
+struct spi_driver icm20608_driver = {
+    .driver = {
+        .name = "icm20608",
+        .owner = THIS_MODULE,
+        .of_match_table = icm20608_of_match,
+    },
+    .probe  = icm20608_probe,
+    .remove = icm20608_remove,
+    .id_table = icm20608_idtable,
+};
+
 static int __init icm20608_init(void)
 {
     int ret = 0;
+    spi_register_driver(&icm20608_driver);
 
     return ret;
 }
 
 static void __exit icm20608_exit(void)
 {
-    
+    spi_unregister_driver(&icm20608_driver);
 }
 
 module_init(icm20608_init);
