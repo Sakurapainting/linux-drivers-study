@@ -24,9 +24,105 @@
 #include <linux/spi/spi.h>
 #include <linux/delay.h>
 
-static int icm20608_probe(struct spi_device* spi){
-    printk("icm20608_probe!\n");
+#define ICM20608_CNT    1
+#define ICM20608_NAME   "icm20608"
+
+struct icm20608_dev {
+    dev_t devid;            // 设备号
+    int major;              // 主设备号
+    int minor;              // 次设备号
+    struct cdev cdev;       // 字符设备
+    struct class* class;    // 类
+    struct device* device;  // 设备
+
+    void* private_data;
+};
+
+static struct icm20608_dev icm20608dev;
+
+static int icm20608_open(struct inode* inode, struct file* file)
+{
+
     return 0;
+}
+
+ssize_t icm20608_read(struct file* file, char __user* buf, size_t size, loff_t* offset)
+{
+    return 0;
+}
+
+static int icm20608_release(struct inode* inode, struct file* file)
+{
+    return 0;
+}
+
+static const struct file_operations icm20608_fops = {
+    .owner = THIS_MODULE,
+    .open = icm20608_open,
+    .read = icm20608_read,
+    .release = icm20608_release,
+};
+
+
+static int icm20608_probe(struct spi_device* spi){
+    int ret = 0;
+    printk("icm20608_probe!\n");
+
+    // 注册字符设备
+    icm20608dev.major = 0;          // 由系统分配主设备号
+    if (icm20608dev.major) {        // 给定主设备号
+        icm20608dev.devid = MKDEV(icm20608dev.major, 0);
+        register_chrdev_region(icm20608dev.devid, ICM20608_CNT, ICM20608_NAME);
+    } else {                        // 由系统分配主设备号
+        alloc_chrdev_region(&icm20608dev.devid, 0, ICM20608_CNT, ICM20608_NAME);
+        icm20608dev.major = MAJOR(icm20608dev.devid);
+        icm20608dev.minor = MINOR(icm20608dev.devid);
+    }
+
+    if(ret < 0) {
+        printk("icm20608 chrdev_region failed!\n");
+        goto fail_devid;
+    }
+    printk("icm20608dev major=%d, minor=%d\n", icm20608dev.major, icm20608dev.minor);
+
+    // cdev 字符设备操作集
+    icm20608dev.cdev.owner = THIS_MODULE;
+    cdev_init(&icm20608dev.cdev, &icm20608_fops);
+    ret = cdev_add(&icm20608dev.cdev, icm20608dev.devid, ICM20608_CNT);
+    if(ret < 0) {
+        printk("icm20608 cdev_add failed!\n");
+        goto fail_cdev;
+    }
+
+    // class
+    icm20608dev.class = class_create(THIS_MODULE, ICM20608_NAME);
+    if (IS_ERR(icm20608dev.class)) {
+        ret = PTR_ERR(icm20608dev.class);
+        printk("icm20608 class_create failed!\n");
+        goto fail_class;
+    }
+
+    // device
+    icm20608dev.device = device_create(icm20608dev.class, NULL, icm20608dev.devid, NULL, ICM20608_NAME);
+    if (IS_ERR(icm20608dev.device)) {
+        ret = PTR_ERR(icm20608dev.device);
+        printk("icm20608 device_create failed!\n");
+        goto fail_device;
+    }
+
+    // 设置icm20608dev私有数据
+    icm20608dev.private_data = spi;
+
+    return 0;
+
+fail_device:
+    class_destroy(icm20608dev.class);
+fail_class:
+    cdev_del(&icm20608dev.cdev);
+fail_cdev:
+    unregister_chrdev_region(icm20608dev.devid, ICM20608_CNT);
+fail_devid:
+    return ret;
 }
 
 static int icm20608_remove(struct spi_device* spi){
