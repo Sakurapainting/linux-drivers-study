@@ -126,7 +126,13 @@ fail_devid:
 }
 
 static int icm20608_remove(struct spi_device* spi){
-    return 0;
+    int ret = 0;
+
+    device_destroy(icm20608dev.class, icm20608dev.devid);
+    class_destroy(icm20608dev.class);
+    cdev_del(&icm20608dev.cdev);
+    unregister_chrdev_region(icm20608dev.devid, ICM20608_CNT);
+    return ret;
 }
 
 // 传统匹配表
