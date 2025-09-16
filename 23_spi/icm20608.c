@@ -40,25 +40,19 @@ struct icm20608_dev {
     void* private_data;
 
     int cs_gpio;            // 片选GPIO
+
+    signed int gyro_x_adc;		/* 陀螺仪X轴原始值 	 */
+	signed int gyro_y_adc;		/* 陀螺仪Y轴原始值		*/
+	signed int gyro_z_adc;		/* 陀螺仪Z轴原始值 		*/
+	signed int accel_x_adc;		/* 加速度计X轴原始值 	*/
+	signed int accel_y_adc;		/* 加速度计Y轴原始值	*/
+	signed int accel_z_adc;		/* 加速度计Z轴原始值 	*/
+	signed int temp_adc;		/* 温度原始值 			*/
 };
 
 static struct icm20608_dev icm20608dev;
 
-static int icm20608_open(struct inode* inode, struct file* file)
-{
-
-    return 0;
-}
-
-ssize_t icm20608_read(struct file* file, char __user* buf, size_t size, loff_t* offset)
-{
-    return 0;
-}
-
-static int icm20608_release(struct inode* inode, struct file* file)
-{
-    return 0;
-}
+#if 0
 
 // spi 读寄存器
 static int icm20608_read_regs(struct icm20608_dev* dev, u8 reg, void* buf, int len)
@@ -166,34 +160,184 @@ fail_sync:
     return ret;
 }
 
+#endif
+
+static int icm20608_read_regs(struct icm20608_dev* dev, u8 reg, void* buf, int len)
+{
+    int ret = 0;
+    u8 data = 0;
+    struct spi_device* spi = (struct spi_device*)dev->private_data;
+
+    // 片选拉低
+    gpio_set_value(dev->cs_gpio, 0);
+
+    data = reg | 0x80;          // 读操作，最高位置1
+    ret = spi_write(spi, &data, 1);   // 发送寄存器地址
+    if (ret < 0) {
+        printk("icm20608 spi_write reg failed!\n");
+        goto fail;
+    }
+
+    ret = spi_read(spi, buf, len);    // 读取数据
+    if (ret < 0) {
+        printk("icm20608 spi_read data failed!\n");
+        goto fail;
+    }
+
+    return 0;
+
+fail:
+    // 片选拉高
+    gpio_set_value(dev->cs_gpio, 1);
+    return ret;
+}
+
+static int icm20608_write_regs(struct icm20608_dev* dev, u8 reg, void* buf, int len)
+{
+    int ret = 0;
+    u8 data = 0;
+    struct spi_device* spi = (struct spi_device*)dev->private_data;
+
+    // 片选拉低
+    gpio_set_value(dev->cs_gpio, 0);
+
+    data = reg & ~0x80;         // 写操作，最高位置0
+    ret = spi_write(spi, &data, 1);   // 发送寄存器地址
+    if (ret < 0) {
+        printk("icm20608 spi_write reg failed!\n");
+        goto fail;
+    }
+
+    ret = spi_write(spi, buf, len);   // 发送数据
+    if (ret < 0) {
+        printk("icm20608 spi_write data failed!\n");
+        goto fail;
+    }
+
+    return 0;
+
+fail:
+    // 片选拉高
+    gpio_set_value(dev->cs_gpio, 1);
+    return ret;
+}
+
 // icm20608 读取单个寄存器
 static u8 icm20608_read_reg(struct icm20608_dev* dev, u8 reg)
 {
     u8 val = 0;
-    icm20608_read_regs(dev, reg, &val, 1);
+    int ret = 0;
+    
+    ret = icm20608_read_regs(dev, reg, &val, 1);
+    if (ret < 0) {
+        printk("icm20608_read_reg failed, reg=0x%x\n", reg);
+        return 0;  // 返回默认值
+    }
     return val;
 }
 
 // icm20608 写单个寄存器
-static void icm20608_write_reg(struct icm20608_dev* dev, u8 reg, u8 val)
+static int icm20608_write_reg(struct icm20608_dev* dev, u8 reg, u8 val)
 {
-    icm20608_write_regs(dev, reg, &val, 1);
+    return icm20608_write_regs(dev, reg, &val, 1);
+}
+
+int icm20608_readdata(struct icm20608_dev *dev)
+{
+	unsigned char data[14] = { 0 };
+	int ret = 0;
+	
+	ret = icm20608_read_regs(dev, ICM20_ACCEL_XOUT_H, data, 14);
+	if (ret < 0) {
+		printk("icm20608_read_regs failed!\n");
+		return ret;
+	}
+
+	dev->accel_x_adc = (signed short)((data[0] << 8) | data[1]); 
+	dev->accel_y_adc = (signed short)((data[2] << 8) | data[3]); 
+	dev->accel_z_adc = (signed short)((data[4] << 8) | data[5]); 
+	dev->temp_adc    = (signed short)((data[6] << 8) | data[7]); 
+	dev->gyro_x_adc  = (signed short)((data[8] << 8) | data[9]); 
+	dev->gyro_y_adc  = (signed short)((data[10] << 8) | data[11]);
+	dev->gyro_z_adc  = (signed short)((data[12] << 8) | data[13]);
+	
+	return 0;
 }
 
 // icm20608 init
-void icm20608_init_hw(struct icm20608_dev* dev)
+int icm20608_init_hw(struct icm20608_dev* dev)
 {
+    int ret = 0;
     u8 value = 0;
-    icm20608_write_reg(dev, ICM20_PWR_MGMT_1, 0X80); // 复位，复位后为0x40，睡眠模式
+    
+    ret = icm20608_write_reg(dev, ICM20_PWR_MGMT_1, 0X80); // 复位，复位后为0x40，睡眠模式
+    if (ret < 0) {
+        printk("icm20608 reset failed!\n");
+        return ret;
+    }
     mdelay(50);
-    icm20608_write_reg(dev, ICM20_PWR_MGMT_1, 0X01); // 关闭睡眠，自动选择时钟
+    
+    ret = icm20608_write_reg(dev, ICM20_PWR_MGMT_1, 0X01); // 关闭睡眠，自动选择时钟
+    if (ret < 0) {
+        printk("icm20608 wakeup failed!\n");
+        return ret;
+    }
     mdelay(50);
 
     value = icm20608_read_reg(dev, ICM20_WHO_AM_I);
     printk("icm20608 id = %#x\n", value);
 
-    value = icm20608_read_reg(dev, ICM20_PWR_MGMT_1);
-    printk("ICM20_PWR_MGMT_1 = %#x\n", value);
+    icm20608_write_reg(&icm20608dev, ICM20_SMPLRT_DIV, 0x00); 	    // 输出速率是内部采样率
+	icm20608_write_reg(&icm20608dev, ICM20_GYRO_CONFIG, 0x18); 	    // 陀螺仪±2000dps量程 	
+	icm20608_write_reg(&icm20608dev, ICM20_ACCEL_CONFIG, 0x18); 	// 加速度计±16G量程 
+	icm20608_write_reg(&icm20608dev, ICM20_CONFIG, 0x04); 		    // 陀螺仪低通滤波BW=20Hz 
+	icm20608_write_reg(&icm20608dev, ICM20_ACCEL_CONFIG2, 0x04);    // 加速度计低通滤波BW=21.2Hz 
+	icm20608_write_reg(&icm20608dev, ICM20_PWR_MGMT_2, 0x00); 	    // 打开加速度计和陀螺仪所有轴 
+	icm20608_write_reg(&icm20608dev, ICM20_LP_MODE_CFG, 0x00); 	    // 关闭低功耗 
+	icm20608_write_reg(&icm20608dev, ICM20_FIFO_EN, 0x00);		    // 关闭FIFO	
+    
+    return 0;
+}
+
+static int icm20608_open(struct inode* inode, struct file* file)
+{
+	file->private_data = &icm20608dev; /* 设置私有数据 */
+	return 0;
+}
+
+ssize_t icm20608_read(struct file* file, char __user* buf, size_t size, loff_t* offset)
+{
+	signed int data[7];
+	long err = 0;
+	int ret = 0;
+	struct icm20608_dev *dev = (struct icm20608_dev *)file->private_data;
+
+	ret = icm20608_readdata(dev);
+	if (ret < 0) {
+		printk("icm20608_readdata failed!\n");
+		return ret;  // 返回错误码
+	}
+
+	data[0] = dev->gyro_x_adc;
+	data[1] = dev->gyro_y_adc;
+	data[2] = dev->gyro_z_adc;
+	data[3] = dev->accel_x_adc;
+	data[4] = dev->accel_y_adc;
+	data[5] = dev->accel_z_adc;
+	data[6] = dev->temp_adc;
+	
+	err = copy_to_user(buf, data, sizeof(data));
+	if (err) {
+		printk("copy_to_user failed!\n");
+		return -EFAULT;
+	}
+	
+	return sizeof(data);  // 返回实际读取的字节数
+}
+
+static int icm20608_release(struct inode* inode, struct file* file)
+{
+    return 0;
 }
 
 static const struct file_operations icm20608_fops = {
@@ -285,7 +429,11 @@ static int icm20608_probe(struct spi_device* spi){
     icm20608dev.private_data = spi;
 
     // 初始化icm20608硬件
-    icm20608_init_hw(&icm20608dev);
+    ret = icm20608_init_hw(&icm20608dev);
+    if (ret < 0) {
+        printk("icm20608 hardware init failed!\n");
+        goto fail_setoutput;
+    }
 
     return 0;
 
