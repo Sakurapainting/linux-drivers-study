@@ -184,6 +184,8 @@ static int icm20608_read_regs(struct icm20608_dev* dev, u8 reg, void* buf, int l
         goto fail;
     }
 
+    // 片选拉高
+    gpio_set_value(dev->cs_gpio, 1);
     return 0;
 
 fail:
@@ -214,6 +216,8 @@ static int icm20608_write_regs(struct icm20608_dev* dev, u8 reg, void* buf, int 
         goto fail;
     }
 
+    // 片选拉高
+    gpio_set_value(dev->cs_gpio, 1);
     return 0;
 
 fail:
