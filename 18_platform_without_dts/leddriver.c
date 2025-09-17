@@ -3,6 +3,7 @@
 #include <asm/uaccess.h>
 #include <linux/cdev.h>
 #include <linux/device.h>
+#include <linux/fcntl.h>
 #include <linux/fs.h>
 #include <linux/gpio.h>
 #include <linux/init.h>
@@ -16,14 +17,13 @@
 #include <linux/of_address.h>
 #include <linux/of_gpio.h>
 #include <linux/of_irq.h>
+#include <linux/platform_device.h>
+#include <linux/poll.h>
+#include <linux/signal.h>
 #include <linux/slab.h>
 #include <linux/spinlock.h>
 #include <linux/timer.h>
 #include <linux/uaccess.h>
-#include <linux/fcntl.h>
-#include <linux/poll.h>
-#include <linux/signal.h>
-#include <linux/platform_device.h>
 
 #define PLATFORM_NAME "platformled" /* 主设备号 */
 #define PLATFORM_COUNT 1 /* 设备数量 */
@@ -98,15 +98,15 @@ static const struct file_operations newchrled_fops = {
     .release = newchrled_release,
 };
 
-
-static int led_probe(struct platform_device *dev) {
+static int led_probe(struct platform_device* dev)
+{
     // printk("led driver probe\n");
     int i = 0;
     int ret = 0;
     unsigned int val = 0;
-    struct resource *ledres[5];
+    struct resource* ledres[5];
 
-    for(i = 0; i < 5; i++) {
+    for (i = 0; i < 5; i++) {
         ledres[i] = platform_get_resource(dev, IORESOURCE_MEM, i);
         if (!ledres[i]) {
             dev_err(&dev->dev, "Failed to get resource\n");
@@ -192,7 +192,8 @@ fail_dev:
     return ret;
 }
 
-static int led_remove(struct platform_device *dev) {
+static int led_remove(struct platform_device* dev)
+{
     // printk("led driver remove\n");
 
     unsigned int val = 0;
@@ -232,11 +233,13 @@ static struct platform_driver leddriver = {
     .remove = led_remove,
 };
 
-static int __init leddriver_init(void) {
+static int __init leddriver_init(void)
+{
     return platform_driver_register(&leddriver);
 }
 
-static void  __exit leddriver_exit(void) {
+static void __exit leddriver_exit(void)
+{
     platform_driver_unregister(&leddriver);
 }
 
