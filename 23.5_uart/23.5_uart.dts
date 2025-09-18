@@ -1,0 +1,17 @@
+&iomuxc {
+    imx6ul-evk {        
+        /*you uart3*/
+		pinctrl_uart3: uart3grp {           // 找有没有引脚冲突：搜索 `UART3_TX` , `UART3_RX` , 把其他地方用不到的行注释掉
+			fsl,pins = <
+				MX6UL_PAD_UART3_TX_DATA__UART3_DCE_TX	0x1b0b1
+				MX6UL_PAD_UART3_RX_DATA__UART3_DCE_RX	0x1b0b1
+			>;
+		};
+    };
+};
+
+&uart3 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_uart3>;
+	status = "okay";
+};
