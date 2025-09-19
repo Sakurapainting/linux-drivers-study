@@ -3,6 +3,7 @@
 #include <asm/uaccess.h>
 #include <linux/cdev.h>
 #include <linux/device.h>
+#include <linux/fcntl.h>
 #include <linux/fs.h>
 #include <linux/gpio.h>
 #include <linux/init.h>
@@ -16,14 +17,13 @@
 #include <linux/of_address.h>
 #include <linux/of_gpio.h>
 #include <linux/of_irq.h>
+#include <linux/platform_device.h>
+#include <linux/poll.h>
+#include <linux/signal.h>
 #include <linux/slab.h>
 #include <linux/spinlock.h>
 #include <linux/timer.h>
 #include <linux/uaccess.h>
-#include <linux/fcntl.h>
-#include <linux/poll.h>
-#include <linux/signal.h>
-#include <linux/platform_device.h>
 
 #define GPIOLED_CNT 1
 #define GPIOLED_NAME "platform-dts-led"
@@ -89,12 +89,13 @@ static const struct file_operations gpioled_fops = {
 };
 
 struct of_device_id led_of_match[] = {
-    {.compatible = "alientek,gpioled"},
+    { .compatible = "alientek,gpioled" },
     // {.compatible = "xxx,gpioled"}, // 其他名字，与设备树中compatible匹配
-    {/* Sentinel */}
+    { /* Sentinel */ }
 };
 
-static int led_probe(struct platform_device* pdev) {
+static int led_probe(struct platform_device* pdev)
+{
     // printk("led probe\n");
 
     int ret = 0;
@@ -194,7 +195,8 @@ fail_devid:
     return 0;
 }
 
-static int led_remove(struct platform_device* pdev) {
+static int led_remove(struct platform_device* pdev)
+{
     // printk("led remove\n");
 
     gpio_set_value(gpioled.led_gpio, 1); // 关闭LED
@@ -219,11 +221,13 @@ struct platform_driver led_driver = {
     .remove = led_remove,
 };
 
-static int __init leddriver_init(void) {
+static int __init leddriver_init(void)
+{
     return platform_driver_register(&led_driver);
 }
 
-static void  __exit leddriver_exit(void) {
+static void __exit leddriver_exit(void)
+{
     platform_driver_unregister(&led_driver);
 }
 
