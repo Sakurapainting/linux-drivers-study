@@ -26,7 +26,7 @@ int main(int argc, char* argv[])
 
     filename = argv[1]; // 获取设备文件名
 
-    fd = open(filename, O_RDWR); 
+    fd = open(filename, O_RDWR);
     if (fd < 0) {
         printf("open %s failed\n", filename);
         return -1;
@@ -34,7 +34,7 @@ int main(int argc, char* argv[])
 
     databuf[0] = atoi(argv[2]); // 将命令行参数转换为整数
 
-    ret = write(fd, databuf, sizeof(databuf)); 
+    ret = write(fd, databuf, sizeof(databuf));
     if (ret < 0) {
         printf("beep control %s failed\n", filename);
         close(fd);

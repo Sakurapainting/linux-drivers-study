@@ -1,11 +1,11 @@
 ### IMX6ULL LinuxDriver
 
-#### 内核自带MISC驱动
+#### 内核自带 MISC 驱动
 
-- MISC设备的主设备号为10
-- MISC的cdev会自动创建，不用手动
-- MISC设备是基于platform
-- 核心就是初始化 `miscdevice` 结构体变量，然后使用 `misc_register` 向内核注册，卸载时使用 `misc_deregister` 
+- MISC 设备的主设备号为 10
+- MISC 的 cdev 会自动创建，不用手动
+- MISC 设备是基于 platform
+- 核心就是初始化 `miscdevice` 结构体变量，然后使用 `misc_register` 向内核注册，卸载时使用 `misc_deregister`
 - `name` 是 设备名字，注册成功会在 `/dev` 目录下生成名为 `name` 的设备文件
 - 以前要用一堆函数去创建设备，比如：
 
@@ -28,12 +28,12 @@ device_destroy();           // 删除设备
 class_destroy();            // 删除类
 ```
 
-- 如果设备miscdevice里面minor为255的话，表示由内核自动分配给次设备号
+- 如果设备 miscdevice 里面 minor 为 255 的话，表示由内核自动分配给次设备号
 
-#### 使用MISC驱动框架
+#### 使用 MISC 驱动框架
 
-- 设备树根节点下创建beep节点，之前chapter9已经加过了
-- 在probe初始化io后，注册misc设备，不用手动创建cdev，在开发板 `/dev` 能找到：
+- 设备树根节点下创建 beep 节点，之前 chapter9 已经加过了
+- 在 probe 初始化 io 后，注册 misc 设备，不用手动创建 cdev，在开发板 `/dev` 能找到：
 
 ```c
     // misc驱动注册
@@ -43,7 +43,6 @@ class_destroy();            // 删除类
         goto fail_register;
     }
 ```
-
 
 ### misc
 
