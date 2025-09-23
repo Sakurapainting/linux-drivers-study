@@ -68,7 +68,7 @@
 			regulator-name = "VSD_3V3";
 			regulator-min-microvolt = <3300000>;
 			regulator-max-microvolt = <3300000>;
-			gpio = <&gpio1 9 GPIO_ACTIVE_HIGH>;
+			// gpio = <&gpio1 9 GPIO_ACTIVE_HIGH>;
 			enable-active-high;
 		};
 
@@ -310,6 +310,19 @@
 	pinctrl-0 = <&pinctrl_i2c2>;
 	status = "okay";
 
+	/*you 4.3寸 FT5426*/
+	ft5426: ft5426@38 {
+		compatible = "edt,edt-ft5426";
+		pinctrl-names = "default";
+		pinctrl-0 = <&pinctrl_tsc
+					&pinctrl_tsc_reset>;
+		interrupt-parent = <&gpio1>;
+		interrupts = <9 IRQ_TYPE_NONE>;
+		reset-gpios = <&gpio5 9 GPIO_ACTIVE_LOW>;
+		interrupt-gpios = <&gpio1 9 GPIO_ACTIVE_LOW>;
+		status = "okay";
+	};
+
 	codec: wm8960@1a {
 		compatible = "wlf,wm8960";
 		reg = <0x1a>;
@@ -347,7 +360,7 @@
 			fsl,pins = <
 				MX6UL_PAD_UART1_RTS_B__GPIO1_IO19	0x17059 /* SD1 CD */
 				MX6UL_PAD_GPIO1_IO05__USDHC1_VSELECT	0x17059 /* SD1 VSELECT */
-				MX6UL_PAD_GPIO1_IO09__GPIO1_IO09        0x17059 /* SD1 RESET */
+				// MX6UL_PAD_GPIO1_IO09__GPIO1_IO09        0x17059 /* SD1 RESET */
 			>;
 		};
 
@@ -387,6 +400,13 @@
 			fsl,pins = <
 				MX6UL_PAD_UART3_TX_DATA__UART3_DCE_TX	0x1b0b1
 				MX6UL_PAD_UART3_RX_DATA__UART3_DCE_RX	0x1b0b1
+			>;
+		};
+
+		/*you tsc INT*/
+		pinctrl_tsc: tscgrp {
+			fsl,pins = <
+				MX6UL_PAD_GPIO1_IO09__GPIO1_IO09	0xf080
 			>;
 		};
 
@@ -528,14 +548,14 @@
 			>;
 		};
 
-		pinctrl_tsc: tscgrp {
-			fsl,pins = <
-				MX6UL_PAD_GPIO1_IO01__GPIO1_IO01	0xb0
-				MX6UL_PAD_GPIO1_IO02__GPIO1_IO02	0xb0
-				/*MX6UL_PAD_GPIO1_IO03__GPIO1_IO03	0xb0*/
-				MX6UL_PAD_GPIO1_IO04__GPIO1_IO04	0xb0
-			>;
-		};
+		// pinctrl_tsc: tscgrp {
+		// 	fsl,pins = <
+		// 		MX6UL_PAD_GPIO1_IO01__GPIO1_IO01	0xb0
+		// 		MX6UL_PAD_GPIO1_IO02__GPIO1_IO02	0xb0
+		// 		/*MX6UL_PAD_GPIO1_IO03__GPIO1_IO03	0xb0*/
+		// 		MX6UL_PAD_GPIO1_IO04__GPIO1_IO04	0xb0
+		// 	>;
+		// };
 
 		pinctrl_uart1: uart1grp {
 			fsl,pins = <
@@ -678,7 +698,7 @@
 		pinctrl_lcdif_reset: lcdifresetgrp {
                         fsl,pins = <
                                 /* used for lcd reset */
-                                MX6ULL_PAD_SNVS_TAMPER9__GPIO5_IO09  0x79
+                                // MX6ULL_PAD_SNVS_TAMPER9__GPIO5_IO09  0x79
                         >;
                 };
 
@@ -695,6 +715,13 @@
                         >;
                 };
         };
+
+		/*you MT RST*/
+		pinctrl_tsc_reset: tsc_reset {
+			fsl,pins = <
+				MX6ULL_PAD_SNVS_TAMPER9__GPIO5_IO09		0x10b0
+			>;
+		};
 
 		pinctrl_enet1_reset: enet1resetgrp {
 			fsl,pins = <
