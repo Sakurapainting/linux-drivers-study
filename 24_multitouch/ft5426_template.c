@@ -28,14 +28,11 @@
 #define AP3216C_NAME "ft5426"
 
 struct ft5426_dev {
-    dev_t devid;            // 设备号
-    int major;              // 主设备号
-    int minor;              // 次设备号
-    struct cdev cdev;       // 字符设备
-    struct class* class;    // 类
-    struct device* device;  // 设备
-
     void* private_data;
+    struct device_node* nd; // 设备节点
+    int irq_pin, reset_pin;
+    int irq_num;            // 中断号
+    struct i2c_client* client;
 };
 
 static struct ft5426_dev ft5426dev;
