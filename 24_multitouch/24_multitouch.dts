@@ -1,0 +1,39 @@
+&i2c2 {
+    /*you 4.3寸 FT5426*/
+	ft5426: ft5426@38 {
+		compatible = "edt,edt-ft5426";
+		pinctrl-names = "default";
+		pinctrl-0 = <&pinctrl_tsc
+					&pinctrl_tsc_reset>;
+		interrupt-parent = <&gpio1>;
+		interrupts = <9 IRQ_TYPE_NONE>;
+		reset-gpios = <&gpio5 9 GPIO_ACTIVE_LOW>;
+		interrupt-gpios = <&gpio1 9 GPIO_ACTIVE_LOW>;
+		status = "okay";
+	};
+};
+
+&iomuxc {
+        /*you tsc INT*/
+		pinctrl_tsc: tscgrp {
+			fsl,pins = <
+				MX6UL_PAD_GPIO1_IO09__GPIO1_IO09	0xf080
+			>;
+		};
+
+        pinctrl_i2c2: i2c2grp {
+			fsl,pins = <
+				MX6UL_PAD_UART5_TX_DATA__I2C2_SCL 0x4001b8b0
+				MX6UL_PAD_UART5_RX_DATA__I2C2_SDA 0x4001b8b0
+			>;
+		}; 
+};
+
+&iomuxc_snvs {
+        /*you MT RST*/
+		pinctrl_tsc_reset: tsc_reset {
+			fsl,pins = <
+				MX6ULL_PAD_SNVS_TAMPER9__GPIO5_IO09		0x10b0
+			>;
+		};
+};
