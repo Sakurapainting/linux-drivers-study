@@ -101,10 +101,37 @@ static int ft5426_write_reg(struct ft5426_dev* dev, u8 reg, u8 val)
     return ft5426_write_regs(dev, reg, &val, 1);
 }
 
+// 复位ft5426
+static void ft5426_ts_reset(struct i2c_client* client, struct ft5426_dev* dev)
+{
+    int ret = 0;
+
+    if(gpio_is_valid(dev->reset_pin)){
+        // 申请复位IO 并且默认输出低电平 devm函数申请后会自动释放
+        ret = devm_gpio_request_one(&client->dev, dev->reset_pin, GPIOF_OUT_INIT_LOW, "edt-ft5426 reset");
+        if(ret){
+            printk("failed to request ft5426 reset gpio %d\n", dev->reset_pin);
+            return ret;
+        }
+
+        msleep(5);
+        gpio_set_value(dev->reset_pin, 1); // 输出高电平
+        msleep(300);
+    }
+}
+
 static int ft5426_probe(struct i2c_client* client, const struct i2c_device_id* id){
     int ret = 0;    
 
     printk("ft5426_probe!\n");
+
+    ft5426dev.client = client;
+
+    // 获取 irq 和 reset 引脚
+    ft5426dev.irq_pin = of_get_named_gpio(client->dev.of_node, "interrupt-gpios", 0);
+    ft5426dev.reset_pin = of_get_named_gpio(client->dev.of_node, "reset-gpios", 0);
+
+    ft5426_ts_reset(client, &ft5426dev);
 
     return ret;
 }
