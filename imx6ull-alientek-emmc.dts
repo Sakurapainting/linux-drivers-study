@@ -310,12 +310,25 @@
 	pinctrl-0 = <&pinctrl_i2c2>;
 	status = "okay";
 
-	/*you 4.3寸 FT5426*/
-	ft5426: ft5426@38 {
-		compatible = "edt,edt-ft5426";
+	// /*you 7寸 FT5426*/
+	// ft5426: ft5426@38 {
+	// 	compatible = "edt,edt-ft5426";
+	// 	reg = <0x38>;
+	// 	pinctrl-names = "default";
+	// 	pinctrl-0 = <&pinctrl_tsc
+	// 				&pinctrl_tsc_reset>;
+	// 	interrupt-parent = <&gpio1>;
+	// 	interrupts = <9 IRQ_TYPE_NONE>;
+	// 	reset-gpios = <&gpio5 9 GPIO_ACTIVE_LOW>;
+	// 	interrupt-gpios = <&gpio1 9 GPIO_ACTIVE_LOW>;
+	// 	status = "okay";
+	// };
+
+	gt9147: gt9147@14 {
+		compatible = "goodix,gt9147", "goodix,gt9xx";
+		reg = <0x14>;
 		pinctrl-names = "default";
-		pinctrl-0 = <&pinctrl_tsc
-					&pinctrl_tsc_reset>;
+		pinctrl-0 = <&pinctrl_tsc>;
 		interrupt-parent = <&gpio1>;
 		interrupts = <9 IRQ_TYPE_NONE>;
 		reset-gpios = <&gpio5 9 GPIO_ACTIVE_LOW>;
@@ -406,7 +419,9 @@
 		/*you tsc INT*/
 		pinctrl_tsc: tscgrp {
 			fsl,pins = <
-				MX6UL_PAD_GPIO1_IO09__GPIO1_IO09	0xf080
+				/* 4.3 寸 RGB 屏幕,GT9147 */
+				MX6UL_PAD_SNVS_TAMPER9__GPIO5_IO09 		0x10B0 /* TSC_RST */
+				MX6UL_PAD_GPIO1_IO09__GPIO1_IO09		0x10B0 /* TSC_INT */
 			>;
 		};
 
@@ -714,14 +729,14 @@
                                 MX6ULL_PAD_SNVS_TAMPER4__GPIO5_IO04   0x17059
                         >;
                 };
-        };
 
-		/*you MT RST*/
-		pinctrl_tsc_reset: tsc_reset {
-			fsl,pins = <
-				MX6ULL_PAD_SNVS_TAMPER9__GPIO5_IO09		0x10b0
-			>;
-		};
+				/*you MT RST*/
+				pinctrl_tsc_reset: tsc_reset {
+					fsl,pins = <
+						MX6ULL_PAD_SNVS_TAMPER9__GPIO5_IO09		0x10b0
+					>;
+				};
+        };
 
 		pinctrl_enet1_reset: enet1resetgrp {
 			fsl,pins = <
@@ -745,7 +760,7 @@
 	status = "okay";
 
 	display0: display {
-		bits-per-pixel = <32>;
+		bits-per-pixel = <24>;
 		bus-width = <24>;
 
 		display-timings {
