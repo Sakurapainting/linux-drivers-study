@@ -101,8 +101,8 @@
 		 * hp-det-polarity = 1: hp detect high for speaker
 		 */
 		hp-det = <3 0>;
-		hp-det-gpios = <&gpio5 4 0>;
-		mic-det-gpios = <&gpio5 4 0>;
+		// hp-det-gpios = <&gpio5 4 0>;
+		// mic-det-gpios = <&gpio5 4 0>;
 		audio-routing =
 			"Headphone Jack", "HP_L",
 			"Headphone Jack", "HP_R",
@@ -302,6 +302,14 @@
 		compatible = "lsc,ap3216c";
 		reg = <0x1e>;
 	};
+
+	codec: wm8960@1a {
+		compatible = "wlf,wm8960";
+		reg = <0x1a>;
+		clocks = <&clks IMX6UL_CLK_SAI2>;
+		clock-names = "mclk";
+		wlf,shared-lrclk;
+	};
 };
 
 &i2c2 {
@@ -336,13 +344,13 @@
 		status = "okay";
 	};
 
-	codec: wm8960@1a {
-		compatible = "wlf,wm8960";
-		reg = <0x1a>;
-		clocks = <&clks IMX6UL_CLK_SAI2>;
-		clock-names = "mclk";
-		wlf,shared-lrclk;
-	};
+	// codec: wm8960@1a {
+	// 	compatible = "wlf,wm8960";
+	// 	reg = <0x1a>;
+	// 	clocks = <&clks IMX6UL_CLK_SAI2>;
+	// 	clock-names = "mclk";
+	// 	wlf,shared-lrclk;
+	// };
 
 	ov5640: ov5640@3c {
 		compatible = "ovti,ov5640";
