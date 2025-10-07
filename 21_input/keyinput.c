@@ -6,6 +6,7 @@
 #include <linux/fs.h>
 #include <linux/gpio.h>
 #include <linux/init.h>
+#include <linux/input.h>
 #include <linux/interrupt.h>
 #include <linux/io.h>
 #include <linux/irq.h>
@@ -20,7 +21,6 @@
 #include <linux/spinlock.h>
 #include <linux/timer.h>
 #include <linux/uaccess.h>
-#include <linux/input.h>
 
 #define KEYINPUT_CNT 1
 #define KEYINPUT_NAME "keyinput"
@@ -44,7 +44,7 @@ struct keyinput_dev {
     struct timer_list timer;
     spinlock_t lock;
 
-    struct input_dev *inputdev;
+    struct input_dev* inputdev;
 };
 
 struct keyinput_dev keyinputdev;
