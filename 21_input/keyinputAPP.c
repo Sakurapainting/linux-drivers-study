@@ -1,4 +1,5 @@
 #include <fcntl.h>
+#include <linux/input.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -6,7 +7,6 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
-#include <linux/input.h>
 
 /*
  * ./keyinputAPP <filename>
@@ -37,18 +37,18 @@ int main(int argc, char* argv[])
         return -1;
     }
 
-    while(1) {
+    while (1) {
         err = read(fd, &inputevent, sizeof(inputevent)); // 读取按键事件
-        if(err > 0) {       // 数据读取成功
-            switch(inputevent.type) {
-                case EV_KEY:    // 按键事件
-                    printf("Key/Button %d %s\n", inputevent.code, inputevent.value ? "press" : "release");
-                    break;
-                case EV_SYN:   // 同步事件
-                    //printf("EV_SYN\n");
-                    break;
-                default:
-                    break;
+        if (err > 0) { // 数据读取成功
+            switch (inputevent.type) {
+            case EV_KEY: // 按键事件
+                printf("Key/Button %d %s\n", inputevent.code, inputevent.value ? "press" : "release");
+                break;
+            case EV_SYN: // 同步事件
+                // printf("EV_SYN\n");
+                break;
+            default:
+                break;
             }
         } else {
             printf("read key error\n");
