@@ -1,0 +1,23 @@
+&flexcan1 {
+    pinctrl-names = "default";
+    pinctrl-0 = <&pinctrl_flexcan1>;
+    xceiver-supply = <&reg_can_3v3>;
+    status = "okay";
+};
+
+// &flexcan2 {
+// 	pinctrl-names = "default";
+// 	pinctrl-0 = <&pinctrl_flexcan2>;
+// 	xceiver-supply = <&reg_can_3v3>;
+// 	status = "okay";
+// };
+
+&iomuxc {
+    pinctrl_flexcan1: flexcan1grp{
+        fsl,pins = <
+            MX6UL_PAD_UART3_RTS_B__FLEXCAN1_RX 0x1b020
+            MX6UL_PAD_UART3_CTS_B__FLEXCAN1_TX 0x1b020
+        >;
+    };
+};
+
