@@ -1,0 +1,12 @@
+&iomuxc {
+    pinctrl-names = "default";
+    pinctrl-0 = <&pinctrl_hog_1>;
+    imx6ul-evk {
+        pinctrl_hog_1: hoggrp-1 {
+            fsl,pins = <
+                // 其他
+                MX6UL_PAD_GPIO1_IO00__ANATOP_OTG1_ID    0x13058 /*OTG1 ID */
+            >;
+        };
+    };
+};
