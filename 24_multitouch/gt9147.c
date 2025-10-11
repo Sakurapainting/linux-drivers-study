@@ -383,6 +383,6 @@ struct i2c_driver gt9147_i2c_driver = {
 module_i2c_driver(gt9147_i2c_driver);
 
 MODULE_LICENSE("GPL");
-MODULE_AUTHOR("zuozhongkai");
+MODULE_AUTHOR("SakoroYou");
 
 
