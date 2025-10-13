@@ -1,8 +1,8 @@
 # RTC
 
-## RTC驱动 - imx6ull内核自带驱动简析
+## RTC 驱动 - imx6ull 内核自带驱动简析
 
-- 在 `imx6ull.dtsi` 
+- 在 `imx6ull.dtsi`
 
 ```c
 snvs_rtc: snvs-rtc-lp {
@@ -13,10 +13,10 @@ snvs_rtc: snvs-rtc-lp {
 };
 ```
 
-- 选LP的原因
-  - SNVS_LP：专用的always-powered-on电源域，系统主电源和备用电源都可以为其供电
+- 选 LP 的原因
+  - SNVS_LP：专用的 always-powered-on 电源域，系统主电源和备用电源都可以为其供电
   - SNVS_HP：系统（芯片）电源
-- 根据compatible找到驱动文件，在 `rtc-snvs.c` ，里面就是初始化 `rtc_device` 并注册
+- 根据 compatible 找到驱动文件，在 `rtc-snvs.c` ，里面就是初始化 `rtc_device` 并注册
 - `rtc_device` 结构体里面重点是 `rtc_class_ops` 操作集
 - 包含在 `snvs_rtc_data` 结构体中：
 
@@ -31,7 +31,7 @@ struct snvs_rtc_data {
 ```
 
 - 地址：0x020cc000+0x34 = 0x020cc034
-- 首先从设备树里面获取SNCS RTC外设寄存器，初始化RTC，申请中断处理闹钟，中断处理函数是  `snvs_rtc_irq_handler` ，最后通过 `devm_rtc_device_register` 函数向内核注册 `rtc_device` ，重点是注册的时候设置了 `snvs_rtc_ops` ：
+- 首先从设备树里面获取 SNCS RTC 外设寄存器，初始化 RTC，申请中断处理闹钟，中断处理函数是 `snvs_rtc_irq_handler` ，最后通过 `devm_rtc_device_register` 函数向内核注册 `rtc_device` ，重点是注册的时候设置了 `snvs_rtc_ops` ：
 
 ```c
 static const struct rtc_class_ops snvs_rtc_ops = {
@@ -43,9 +43,9 @@ static const struct rtc_class_ops snvs_rtc_ops = {
 };
 ```
 
-- 当应用通过ioctl读取RTC时间的时候，RTC核心层的 `rtc_dev_ioctl` 会执行，通知cmd来决定具体操作，比如 `RTC_ALM_READ` 就是读取闹钟，此时 `rtc_read_alarm` 就会执行，会找到具体的 `rtc_device` ，运行其下的ops里面的 `read_alarm` 
+- 当应用通过 ioctl 读取 RTC 时间的时候，RTC 核心层的 `rtc_dev_ioctl` 会执行，通知 cmd 来决定具体操作，比如 `RTC_ALM_READ` 就是读取闹钟，此时 `rtc_read_alarm` 就会执行，会找到具体的 `rtc_device` ，运行其下的 ops 里面的 `read_alarm`
 
-## RTC驱动 - 使用和测试
+## RTC 驱动 - 使用和测试
 
 - 查看、设置系统时间：
 
@@ -80,7 +80,7 @@ Tue Sep  9 16:34:00 UTC 2025
 Tue Sep  9 16:34:04 UTC 2025
 ```
 
-- 写入RTC寄存器（需要开发板装有纽扣电池供snvs）。**但是，imx6的内部RTC耗电太快，过不了多久就要换新纽扣电池。解决方案是采取外部时钟的方式，比如外部 RTC——PCF85063（I2C 接口）**：
+- 写入 RTC 寄存器（需要开发板装有纽扣电池供 snvs）。**但是，imx6 的内部 RTC 耗电太快，过不了多久就要换新纽扣电池。解决方案是采取外部时钟的方式，比如外部 RTC——PCF85063（I2C 接口）**：
 
 ```bash
 / # hwclock -w
