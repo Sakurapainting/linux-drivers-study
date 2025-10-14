@@ -21,6 +21,7 @@
         "io.h": "c",
         "input.h": "c",
         "spinlock.h": "c",
-        "miscdevice.h": "c"
+        "miscdevice.h": "c",
+        "jiffies.h": "c"
     },
 }
