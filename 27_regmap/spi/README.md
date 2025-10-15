@@ -150,7 +150,7 @@ txdata[0] = reg | 0x80;
 这里我们使用 Linux 内核自带的片选信号，而不是自己操作片选信号高低，所以要选硬件片选信号，带"s"的这个！！！
 
 ```c
-    cs-gpios = <&gpio1 20 GPIO_ACTIVE_LOW>;		// 硬件片选引脚
+    cs-gpios = <&gpio1 20 GPIO_ACTIVE_LOW>;		// linux内核自动片选引脚
     // cs-gpio = <&gpio1 20 GPIO_ACTIVE_LOW>;			// 软件片选引脚
 ```
 
