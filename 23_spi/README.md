@@ -55,3 +55,13 @@
 - 用到两个重要的结构体： `spi_transfer` 和 `spi_message` 
 - `spi_transfer` 用来构建收发数据内容
 - 构建 `spi_transfer` ，然后将其打包到 `spi_message` 里面，需要使用 `spi_message_init` 初始化 `spi_message` 然后再使用 `spi_message_add_tail` 将 `spi_transfer` 添加到 `spi_message` 里面，最终使用 `spi_sync` 和 `spi_async` 来发送。
+
+## Linux 内核 自动管理的GPIO片选/SPI框架管理的片选
+
+参考icm20608_cs-gpios.c，且修改如下设备树
+
+```c
+	cs-gpios = <&gpio1 20 GPIO_ACTIVE_LOW>;		// 硬件片选引脚
+	// cs-gpio = <&gpio1 20 GPIO_ACTIVE_LOW>;			// 软件片选引脚
+```
+
