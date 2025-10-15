@@ -45,7 +45,7 @@
 - 在ECSPI3节点下创建 `icm20608` 子节点，其中属性配置查询 `${sdk}/Documentation/devicetree/bindings/spi/fsl-imx-cspi.txt` ， `cs-gpios` 是nxp的软件片选
 
 ```c
-	// cs-gpios = <&gpio1 20 GPIO_ACTIVE_LOW>;		// 硬件片选引脚
+	// cs-gpios = <&gpio1 20 GPIO_ACTIVE_LOW>;		// linux内核自动片选引脚
 	cs-gpio = <&gpio1 20 GPIO_ACTIVE_LOW>;			// 软件片选引脚
 ```
 
@@ -61,7 +61,7 @@
 参考icm20608_cs-gpios.c，和 23_spi_cs-gpios.dts，且修改如下设备树
 
 ```c
-	cs-gpios = <&gpio1 20 GPIO_ACTIVE_LOW>;		// 硬件片选引脚
+	cs-gpios = <&gpio1 20 GPIO_ACTIVE_LOW>;		// linux内核自动片选引脚
 	// cs-gpio = <&gpio1 20 GPIO_ACTIVE_LOW>;			// 软件片选引脚
 ```
 
