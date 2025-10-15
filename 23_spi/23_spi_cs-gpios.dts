@@ -1,0 +1,29 @@
+&iomuxc {
+    imx6ul-evk {
+        /*you spi*/
+		pinctrl_ecspi3: ecspi3grp{      // 找有没有引脚冲突：搜索 `UART2_TX` , `UART2_RX` , `UART2_CTS` , `UART2_RTS` , `GPIO1_IO20` , 把其他地方用不到的行注释掉
+			fsl,pins = <
+				MX6UL_PAD_UART2_TX_DATA__GPIO1_IO20	  	0x10b0
+				MX6UL_PAD_UART2_RX_DATA__ECSPI3_SCLK	0x10b1
+				MX6UL_PAD_UART2_CTS_B__ECSPI3_MOSI		0x10b1
+				MX6UL_PAD_UART2_RTS_B__ECSPI3_MISO		0x10b1
+			>;
+		};
+    };
+};
+
+&ecspi3 {
+	fsl,spi-num-chipselects = <1>;					// 一个片选
+	cs-gpios = <&gpio1 20 GPIO_ACTIVE_LOW>;		// 硬件片选引脚
+	// cs-gpio = <&gpio1 20 GPIO_ACTIVE_LOW>;			// 软件片选引脚
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_ecspi3>;
+	status = "okay";
+
+	// 对应的SPI芯片子节点
+	spidev0: icm20608@0 {							// @ 后面的0表示此SPI芯片接到哪个硬件片选上
+		reg = <0>;									// 硬件片选号
+		compatible = "invensense,icm20608";
+		spi-max-frequency = <8000000>;				// 最大工作频率
+	};
+};
