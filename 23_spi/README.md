@@ -58,7 +58,7 @@
 
 ## Linux 内核 自动管理的GPIO片选/SPI框架管理的片选
 
-参考icm20608_cs-gpios.c，且修改如下设备树
+参考icm20608_cs-gpios.c，和 23_spi_cs-gpios.dts，且修改如下设备树
 
 ```c
 	cs-gpios = <&gpio1 20 GPIO_ACTIVE_LOW>;		// 硬件片选引脚
