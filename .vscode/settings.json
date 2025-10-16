@@ -22,6 +22,7 @@
         "input.h": "c",
         "spinlock.h": "c",
         "miscdevice.h": "c",
-        "jiffies.h": "c"
+        "jiffies.h": "c",
+        "delay.h": "c"
     },
 }
