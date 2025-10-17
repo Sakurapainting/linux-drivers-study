@@ -1146,3 +1146,169 @@ static int icm20608_write_raw_get_fmt(struct iio_dev *indio_dev,
 	return -EINVAL;
 }
 ```
+
+## IIO - 测试APP编写
+
+以下思路总结来自 Copilot：
+
+# ICM20608 测试 APP 编写思路总结
+
+## 1. **整体架构**
+
+```
+用户空间应用程序
+    ↓ 读取 sysfs 文件
+IIO 子系统 sysfs 接口
+    ↓
+内核驱动程序
+    ↓
+ICM20608 硬件
+```
+
+## 2. **核心设计思路**
+
+### 2.1 **利用 IIO 框架的 sysfs 接口**
+
+IIO 框架会自动在 `/sys/bus/iio/devices/iio:deviceX/` 下创建标准接口文件：
+
+| 文件类型 | 命名规则 | 说明 |
+|---------|---------|------|
+| `*_raw` | `in_accel_x_raw` | 原始 ADC 值（整数）|
+| `*_scale` | `in_accel_scale` | 转换比例（浮点数）|
+| `*_offset` | `in_temp_offset` | 偏移值（整数）|
+| `*_calibbias` | `in_accel_x_calibbias` | 校准偏移（整数）|
+
+### 2.2 **数据读取流程**
+
+```c
+// 1. 定义文件路径数组
+static char *file_path[] = {
+    "/sys/bus/iio/devices/iio:device0/in_accel_scale",
+    "/sys/bus/iio/devices/iio:device0/in_accel_x_raw",
+    // ...
+};
+
+// 2. 定义路径索引枚举（便于代码可读性）
+enum path_index {
+    IN_ACCEL_SCALE = 0,
+    IN_ACCEL_X_RAW,
+    // ...
+};
+
+// 3. 使用宏简化重复代码
+#define SENSOR_FLOAT_DATA_GET(ret, index, str, member)\
+    ret = file_data_read(file_path[index], str);\
+    dev->member = atof(str);  // 字符串 → 浮点数
+```
+
+## 3. **关键技术点**
+
+### 3.1 **宏定义简化代码**
+
+````c
+// 浮点数读取宏
+#define SENSOR_FLOAT_DATA_GET(ret, index, str, member)\
+    ret = file_data_read(file_path[index], str);\
+    dev->member = atof(str);
+
+// 整数读取宏
+#define SENSOR_INT_DATA_GET(ret, index, str, member)\
+    ret = file_data_read(file_path[index], str);\
+    dev->member = atoi(str);
+
+// 使用示例：
+SENSOR_FLOAT_DATA_GET(ret, IN_ACCEL_SCALE, str, accel_scale);
+// 展开后：
+// ret = file_data_read(file_path[IN_ACCEL_SCALE], str);
+// dev->accel_scale = atof(str);
+````
+
+### 3.2 **数据结构设计**
+
+````c
+struct icm20608_dev {
+    // 原始值（从 *_raw 文件读取）
+    int accel_x_raw, accel_y_raw, accel_z_raw;
+    int gyro_x_raw, gyro_y_raw, gyro_z_raw;
+    int temp_raw;
+    
+    // 比例因子（从 *_scale 文件读取）
+    float accel_scale, gyro_scale, temp_scale;
+    
+    // 偏移值（从 *_offset 文件读取）
+    int temp_offset;
+    
+    // 计算后的实际物理值
+    float accel_x_act, accel_y_act, accel_z_act;
+    float gyro_x_act, gyro_y_act, gyro_z_act;
+    float temp_act;
+};
+````
+
+### 3.3 **物理值计算公式**
+
+````c
+// 加速度计：实际值(g) = 原始值 × 比例因子
+dev->accel_x_act = dev->accel_x_raw * dev->accel_scale;
+
+// 陀螺仪：实际值(°/s) = 原始值 × 比例因子
+dev->gyro_x_act = dev->gyro_x_raw * dev->gyro_scale;
+
+// 温度：实际值(°C) = (原始值 - 偏移) / 比例因子 + 25
+dev->temp_act = ((dev->temp_raw - dev->temp_offset) / dev->temp_scale) + 25;
+````
+
+## 4. **编写步骤总结**
+
+### 步骤 1：确定 sysfs 文件路径
+```bash
+# 查看 IIO 设备
+ls /sys/bus/iio/devices/
+
+# 查看设备属性文件
+ls /sys/bus/iio/devices/iio:device0/
+```
+
+### 步骤 2：定义数据结构
+- 原始值成员（整数）
+- 比例因子成员（浮点）
+- 实际值成员（浮点）
+
+### 步骤 3：实现文件读取函数
+````c
+static int file_data_read(char *filename, char *str)
+{
+    FILE *fp = fopen(filename, "r");
+    fscanf(fp, "%s", str);  // 读取字符串
+    fclose(fp);
+    return 0;
+}
+````
+
+### 步骤 4：实现数据读取函数
+````c
+static int sensor_read(struct icm20608_dev *dev)
+{
+    // 1. 读取原始值和比例因子
+    SENSOR_INT_DATA_GET(ret, IN_ACCEL_X_RAW, str, accel_x_raw);
+    SENSOR_FLOAT_DATA_GET(ret, IN_ACCEL_SCALE, str, accel_scale);
+    
+    // 2. 计算实际物理值
+    dev->accel_x_act = dev->accel_x_raw * dev->accel_scale;
+    
+    return 0;
+}
+````
+
+### 步骤 5：主函数循环读取
+````c
+int main(int argc, char *argv[])
+{
+    while (1) {
+        sensor_read(&icm20608);
+        printf("ax = %.2fg\n", icm20608.accel_x_act);
+        usleep(100000);  // 100ms
+    }
+    return 0;
+}
+````
