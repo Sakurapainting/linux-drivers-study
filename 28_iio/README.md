@@ -565,3 +565,133 @@ dev        name       of_node    power      subsystem  uevent
 /sys/devices/platform/soc/2000000.aips-bus/2000000.spba-bus/2010000.ecspi/spi_master/spi2/spi2.0/iio:device0 # cat name
 icm20608
 ```
+
+## IIO - 驱动编写-通道
+
+```c
+// icm20608 通道
+static const struct iio_chan_spec icm20608_channels[] = {
+    // 温度
+    {
+        .type = IIO_TEMP,
+		.info_mask_separate = BIT(IIO_CHAN_INFO_RAW)
+				| BIT(IIO_CHAN_INFO_OFFSET)
+				| BIT(IIO_CHAN_INFO_SCALE),
+		.scan_index = INV_ICM20608_SCAN_TEMP,
+		.scan_type = {
+				.sign = 's',
+				.realbits = 16,
+				.storagebits = 16,
+				.shift = 0,
+				.endianness = IIO_BE,
+			     },
+    },
+};
+```
+
+- type：指定温度类型
+- info_mask_separate 定义该通道单独支持的属性掩码（每个通道独立的属性）：
+  - BIT(IIO_CHAN_INFO_RAW)：原始数据值
+    - 对应 sysfs 文件：in_temp_raw
+    - 读取传感器的原始 ADC 值
+  - BIT(IIO_CHAN_INFO_OFFSET)：偏移值
+    - 对应 sysfs 文件：in_temp_offset
+    - 用于温度计算：实际温度 = (raw + offset) * scale
+  - BIT(IIO_CHAN_INFO_SCALE)：比例因子
+    - 对应 sysfs 文件：in_temp_scale
+    - 用于将原始值转换为实际温度单位
+- 温度计算公式
+
+```
+实际温度(°C) = (raw_value + offset) × scale
+```
+
+- 示例（ICM20608 典型值）：
+
+```
+offset = 0
+scale = 0.00294117647  // (1/340)
+实际温度 = (raw_value / 340) + 36.53
+```
+
+sysfs 文件映射
+该配置会生成以下 sysfs 文件：
+
+```
+/sys/bus/iio/devices/iio:deviceX/
+├── in_temp_raw        # 原始值
+├── in_temp_offset     # 偏移值
+└── in_temp_scale      # 比例因子
+```
+
+即使在直接模式下,定义 scan_index 也是良好的编程实践,因为:
+
+1. 为将来可能添加的缓冲模式做准备
+2. IIO 框架要求每个通道都有唯一的 scan_index
+3. 便于通道管理和识别
+
+```c
+/* 
+ * ICM20608的扫描元素，3轴加速度计、
+ * 3轴陀螺仪、1路温度传感器，1路时间戳 
+ */
+enum inv_icm20608_scan {
+	INV_ICM20608_SCAN_ACCL_X,
+	INV_ICM20608_SCAN_ACCL_Y,
+	INV_ICM20608_SCAN_ACCL_Z,
+	INV_ICM20608_SCAN_TEMP,
+	INV_ICM20608_SCAN_GYRO_X,
+	INV_ICM20608_SCAN_GYRO_Y,
+	INV_ICM20608_SCAN_GYRO_Z,
+	INV_ICM20608_SCAN_TIMESTAMP,
+};
+```
+
+```c
+// icm20608 通道
+static const struct iio_chan_spec icm20608_channels[] = {
+    /* 温度 */
+    {
+        .type = IIO_TEMP,
+		.info_mask_separate = BIT(IIO_CHAN_INFO_RAW)
+				| BIT(IIO_CHAN_INFO_OFFSET)
+				| BIT(IIO_CHAN_INFO_SCALE),
+		.scan_index = INV_ICM20608_SCAN_TEMP,
+		.scan_type = {
+				.sign = 's',
+				.realbits = 16,
+				.storagebits = 16,
+				.shift = 0,
+				.endianness = IIO_BE,
+			     },
+    },
+
+    /* 加速度XYZ三个通道 */
+    ICM20608_CHAN(IIO_ACCEL, IIO_MOD_X, INV_ICM20608_SCAN_ACCL_X),
+    ICM20608_CHAN(IIO_ACCEL, IIO_MOD_Y, INV_ICM20608_SCAN_ACCL_Y),
+    ICM20608_CHAN(IIO_ACCEL, IIO_MOD_Z, INV_ICM20608_SCAN_ACCL_Z),
+
+    /* 陀螺仪XYZ三个通道 */
+    ICM20608_CHAN(IIO_ANGL_VEL, IIO_MOD_X, INV_ICM20608_SCAN_GYRO_X),
+    ICM20608_CHAN(IIO_ANGL_VEL, IIO_MOD_Y, INV_ICM20608_SCAN_GYRO_Y),
+    ICM20608_CHAN(IIO_ANGL_VEL, IIO_MOD_Z, INV_ICM20608_SCAN_GYRO_Z),
+};
+```
+
+测试：
+
+```bash
+/lib/modules/4.1.15 # cd /sys/bus/iio/devices/
+/sys/bus/iio/devices # ls
+iio:device0
+/sys/bus/iio/devices # cd iio\:device0/
+/sys/devices/platform/soc/2000000.aips-bus/2000000.spba-bus/2010000.ecspi/spi_master/spi2/spi2.0/iio:device0 # ls
+dev                     in_anglvel_scale        in_temp_raw
+in_accel_scale          in_anglvel_x_calibbias  in_temp_scale
+in_accel_x_calibbias    in_anglvel_x_raw        name
+in_accel_x_raw          in_anglvel_y_calibbias  of_node
+in_accel_y_calibbias    in_anglvel_y_raw        power
+in_accel_y_raw          in_anglvel_z_calibbias  subsystem
+in_accel_z_calibbias    in_anglvel_z_raw        uevent
+in_accel_z_raw          in_temp_offset
+```
