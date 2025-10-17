@@ -36,6 +36,21 @@
 #define ICM20608_CNT    1
 #define ICM20608_NAME   "icm20608"
 
+/* 
+ * ICM20608的扫描元素，3轴加速度计、
+ * 3轴陀螺仪、1路温度传感器，1路时间戳 
+ */
+enum inv_icm20608_scan {
+	INV_ICM20608_SCAN_ACCL_X,
+	INV_ICM20608_SCAN_ACCL_Y,
+	INV_ICM20608_SCAN_ACCL_Z,
+	INV_ICM20608_SCAN_TEMP,
+	INV_ICM20608_SCAN_GYRO_X,
+	INV_ICM20608_SCAN_GYRO_Y,
+	INV_ICM20608_SCAN_GYRO_Z,
+	INV_ICM20608_SCAN_TIMESTAMP,
+};
+
 #define ICM20608_CHAN(_type, _channel2, _index)                    \
 	{                                                             \
 		.type = _type,                                        \
@@ -56,7 +71,31 @@
 
 // icm20608 通道
 static const struct iio_chan_spec icm20608_channels[] = {
+    /* 温度 */
+    {
+        .type = IIO_TEMP,
+		.info_mask_separate = BIT(IIO_CHAN_INFO_RAW)
+				| BIT(IIO_CHAN_INFO_OFFSET)
+				| BIT(IIO_CHAN_INFO_SCALE),
+		.scan_index = INV_ICM20608_SCAN_TEMP,
+		.scan_type = {
+				.sign = 's',
+				.realbits = 16,
+				.storagebits = 16,
+				.shift = 0,
+				.endianness = IIO_BE,
+			     },
+    },
 
+    /* 加速度XYZ三个通道 */
+    ICM20608_CHAN(IIO_ACCEL, IIO_MOD_X, INV_ICM20608_SCAN_ACCL_X),
+    ICM20608_CHAN(IIO_ACCEL, IIO_MOD_Y, INV_ICM20608_SCAN_ACCL_Y),
+    ICM20608_CHAN(IIO_ACCEL, IIO_MOD_Z, INV_ICM20608_SCAN_ACCL_Z),
+
+    /* 陀螺仪XYZ三个通道 */
+    ICM20608_CHAN(IIO_ANGL_VEL, IIO_MOD_X, INV_ICM20608_SCAN_GYRO_X),
+    ICM20608_CHAN(IIO_ANGL_VEL, IIO_MOD_Y, INV_ICM20608_SCAN_GYRO_Y),
+    ICM20608_CHAN(IIO_ANGL_VEL, IIO_MOD_Z, INV_ICM20608_SCAN_GYRO_Z),
 };
 
 struct icm20608_dev {
