@@ -35,6 +35,20 @@
 
 #define ICM20608_CNT    1
 #define ICM20608_NAME   "icm20608"
+#define ICM20608_TEMP_OFFSET	     0
+#define ICM20608_TEMP_SCALE		     326800000
+
+/*
+ * icm20608陀螺仪分辨率，对应250、500、1000、2000，计算方法：
+ * 以正负250度量程为例，500/2^16=0.007629，扩大1000000倍，就是7629
+ */
+static const int gyro_scale_icm20608[] = {7629, 15258, 30517, 61035};
+
+/* 
+ * icm20608加速度计分辨率，对应2、4、8、16 计算方法：
+ * 以正负2g量程为例，4/2^16=0.000061035，扩大1000000000倍，就是61035
+ */
+static const int accel_scale_icm20608[] = {61035, 122070, 244140, 488281};
 
 /* 
  * ICM20608的扫描元素，3轴加速度计、
@@ -161,10 +175,244 @@ int icm20608_init_hw(struct icm20608_dev* dev)
     return 0;
 }
 
-// iio info
-static const struct iio_info icm20608_info = {
-    .driver_module = THIS_MODULE,
+static int icm20608_sensor_show(struct icm20608_dev *dev, int reg,
+				   int axis, int *val)
+{
+	int ind, result;
+	__be16 d;
 
+	ind = (axis - IIO_MOD_X) * 2;
+	result = regmap_bulk_read(dev->regmap, reg + ind, (u8 *)&d, 2);
+	if (result)
+		return -EINVAL;
+	*val = (short)be16_to_cpup(&d);
+
+	return IIO_VAL_INT;
+}
+
+static int icm20608_sensor_set(struct icm20608_dev *dev, int reg,
+				int axis, int val)
+{
+	int ind, result;
+	__be16 d = cpu_to_be16(val);
+
+	ind = (axis - IIO_MOD_X) * 2;
+	result = regmap_bulk_write(dev->regmap, reg + ind, (u8 *)&d, 2);
+	if (result)
+		return -EINVAL;
+
+	return 0;
+}
+
+static int icm20608_read_channel_data(struct iio_dev *indio_dev,
+					 struct iio_chan_spec const *chan,
+					 int *val)
+{
+	struct icm20608_dev *dev = iio_priv(indio_dev);
+	int ret = 0;
+
+	switch (chan->type) {
+        case IIO_ANGL_VEL:	/* 读取陀螺仪数据 */
+            ret = icm20608_sensor_show(dev, ICM20_GYRO_XOUT_H, chan->channel2, val);  /* channel2为X、Y、Z轴 */
+            break;
+        case IIO_ACCEL:		/* 读取加速度计数据 */
+            ret = icm20608_sensor_show(dev, ICM20_ACCEL_XOUT_H, chan->channel2, val); /* channel2为X、Y、Z轴 */
+            break;
+        case IIO_TEMP:		/* 读取温度 */
+            ret = icm20608_sensor_show(dev, ICM20_TEMP_OUT_H, IIO_MOD_X, val);  
+            break;
+        default:
+            ret = -EINVAL;
+            break;
+        }
+	return ret;
+}
+
+static int icm20608_write_gyro_scale(struct icm20608_dev *dev, int val)
+{
+	int result, i;
+	u8 d;
+
+	for (i = 0; i < ARRAY_SIZE(gyro_scale_icm20608); ++i) {
+		if (gyro_scale_icm20608[i] == val) {
+			d = (i << 3);
+			result = regmap_write(dev->regmap, ICM20_GYRO_CONFIG, d);
+			if (result)
+				return result;
+			return 0;
+		}
+	}
+	return -EINVAL;
+}
+
+static int icm20608_write_accel_scale(struct icm20608_dev *dev, int val)
+{
+	int result, i;
+	u8 d;
+
+	for (i = 0; i < ARRAY_SIZE(accel_scale_icm20608); ++i) {
+		if (accel_scale_icm20608[i] == val) {
+			d = (i << 3);
+			result = regmap_write(dev->regmap, ICM20_ACCEL_CONFIG, d);
+			if (result)
+				return result;
+			return 0;
+		}
+	}
+	return -EINVAL;
+}
+
+static int icm20608_read_raw(struct iio_dev *indio_dev,
+            struct iio_chan_spec const *chan,
+            int *val,
+            int *val2,
+            long mask)
+{
+    int ret = 0;
+    unsigned char regdata = 0;
+    struct icm20608_dev* dev = iio_priv(indio_dev);
+
+    /* 区分读取的数据类型，是RAW/OFFSET/SCALE */
+    switch(mask) {
+        case IIO_CHAN_INFO_RAW:
+            mutex_lock(&dev->lock);								/* 上锁 			*/
+		    ret = icm20608_read_channel_data(indio_dev, chan, val); 	/* 读取通道值 */
+		    mutex_unlock(&dev->lock);							/* 释放锁 			*/
+            return ret;
+        case IIO_CHAN_INFO_SCALE:
+            switch (chan->type) {
+                case IIO_ANGL_VEL:
+                    mutex_lock(&dev->lock);
+                    // bit4:3陀螺仪量程选择
+                    regdata = (icm20608_read_reg(dev, ICM20_GYRO_CONFIG) & 0X18) >> 3;
+                    *val  = 0;
+                    *val2 = gyro_scale_icm20608[regdata];
+                    mutex_unlock(&dev->lock);
+                    return IIO_VAL_INT_PLUS_MICRO;	/* 值为val+val2/1000000 */
+                case IIO_ACCEL:
+                    mutex_lock(&dev->lock);
+                    regdata = (icm20608_read_reg(dev, ICM20_ACCEL_CONFIG) & 0X18) >> 3;
+                    *val = 0;
+                    *val2 = accel_scale_icm20608[regdata];
+                    mutex_unlock(&dev->lock);
+                    return IIO_VAL_INT_PLUS_NANO;/* 值为val+val2/1000000000 */
+                case IIO_TEMP:					
+                    *val = ICM20608_TEMP_SCALE/ 1000000;
+                    *val2 = ICM20608_TEMP_SCALE % 1000000;
+                    return IIO_VAL_INT_PLUS_MICRO;	/* 值为val+val2/1000000 */
+                default:
+                    return -EINVAL;
+		    }
+            return ret;
+        case IIO_CHAN_INFO_OFFSET:
+           	switch (chan->type) {
+                case IIO_TEMP:
+                    *val = ICM20608_TEMP_OFFSET;
+                    return IIO_VAL_INT;
+                default:
+                    return -EINVAL;
+		    }
+            return ret;
+        case IIO_CHAN_INFO_CALIBBIAS:
+            switch (chan->type) {
+                case IIO_ANGL_VEL:		/* 陀螺仪的校准值 */
+                    mutex_lock(&dev->lock);
+                    ret = icm20608_sensor_show(dev, ICM20_XG_OFFS_USRH, chan->channel2, val);
+                    mutex_unlock(&dev->lock);
+                    return ret;
+                case IIO_ACCEL:			/* 加速度计的校准值 */
+                    mutex_lock(&dev->lock);	
+                    ret = icm20608_sensor_show(dev, ICM20_XA_OFFSET_H, chan->channel2, val);
+                    mutex_unlock(&dev->lock);
+                    return ret;
+                default:
+                    return -EINVAL;
+		    }
+            return ret;
+        default:
+            return -EINVAL;
+    }
+
+    return 0;
+}
+
+static int icm20608_write_raw(struct iio_dev *indio_dev,
+             struct iio_chan_spec const *chan,
+             int val,
+             int val2,
+             long mask)
+{
+    int ret = 0;
+	struct icm20608_dev *dev = iio_priv(indio_dev);
+
+	switch (mask) {
+	case IIO_CHAN_INFO_SCALE:	/* 设置陀螺仪和加速度计的分辨率 */
+		switch (chan->type) {
+		case IIO_ANGL_VEL:		/* 设置陀螺仪 */
+			mutex_lock(&dev->lock);
+			ret = icm20608_write_gyro_scale(dev, val2);
+			mutex_unlock(&dev->lock);
+			break;
+		case IIO_ACCEL:			/* 设置加速度计 */
+			mutex_lock(&dev->lock);
+			ret = icm20608_write_accel_scale(dev, val2);
+			mutex_unlock(&dev->lock);
+			break;
+		default:
+			ret = -EINVAL;
+			break;
+		}
+		break;
+	case IIO_CHAN_INFO_CALIBBIAS:	/* 设置陀螺仪和加速度计的校准值*/
+		switch (chan->type) {
+		case IIO_ANGL_VEL:		/* 设置陀螺仪校准值 */
+			mutex_lock(&dev->lock);
+			ret = icm20608_sensor_set(dev, ICM20_XG_OFFS_USRH,
+									    chan->channel2, val);
+			mutex_unlock(&dev->lock);
+			break;
+		case IIO_ACCEL:			/* 加速度计校准值 */
+			mutex_lock(&dev->lock);
+			ret = icm20608_sensor_set(dev, ICM20_XA_OFFSET_H,
+							             chan->channel2, val);
+			mutex_unlock(&dev->lock);
+			break;
+		default:
+			ret = -EINVAL;
+			break;
+		}
+		break;
+	default:
+		ret = -EINVAL;
+		break;
+	}
+	return ret;
+}
+
+static int icm20608_write_raw_get_fmt(struct iio_dev *indio_dev,
+             struct iio_chan_spec const *chan,
+             long mask)
+{
+    switch (mask) {
+	case IIO_CHAN_INFO_SCALE:
+		switch (chan->type) {
+		case IIO_ANGL_VEL:		/* 用户空间写的陀螺仪分辨率数据要乘以1000000 */
+			return IIO_VAL_INT_PLUS_MICRO;
+		default:				/* 用户空间写的加速度计分辨率数据要乘以1000000000 */
+			return IIO_VAL_INT_PLUS_NANO;
+		}
+	default:
+		return IIO_VAL_INT_PLUS_MICRO;
+	}
+	return -EINVAL;
+}
+
+/* iio_info */
+static const struct iio_info icm20608_info = {
+	.driver_module  = THIS_MODULE,
+	.read_raw		= icm20608_read_raw,
+	.write_raw		= icm20608_write_raw,
+    .write_raw_get_fmt = icm20608_write_raw_get_fmt,
 };
 
 static int icm20608_probe(struct spi_device* spi){
