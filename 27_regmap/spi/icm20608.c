@@ -122,15 +122,15 @@ int icm20608_init_hw(struct icm20608_dev* dev)
     value = icm20608_read_reg(dev, ICM20_WHO_AM_I);
     printk("icm20608 id = %#x\n", value);
 
-    icm20608_write_reg(&icm20608dev, ICM20_SMPLRT_DIV, 0x00); 	    // 输出速率是内部采样率
-	icm20608_write_reg(&icm20608dev, ICM20_GYRO_CONFIG, 0x18); 	    // 陀螺仪±2000dps量程 	
-	icm20608_write_reg(&icm20608dev, ICM20_ACCEL_CONFIG, 0x18); 	// 加速度计±16G量程 
-	icm20608_write_reg(&icm20608dev, ICM20_CONFIG, 0x04); 		    // 陀螺仪低通滤波BW=20Hz 
-	icm20608_write_reg(&icm20608dev, ICM20_ACCEL_CONFIG2, 0x04);    // 加速度计低通滤波BW=21.2Hz 
-	icm20608_write_reg(&icm20608dev, ICM20_PWR_MGMT_2, 0x00); 	    // 打开加速度计和陀螺仪所有轴 
-	icm20608_write_reg(&icm20608dev, ICM20_LP_MODE_CFG, 0x00); 	    // 关闭低功耗 
-	icm20608_write_reg(&icm20608dev, ICM20_FIFO_EN, 0x00);		    // 关闭FIFO	
-    
+    icm20608_write_reg(dev, ICM20_SMPLRT_DIV, 0x00); 	    // 输出速率是内部采样率
+	icm20608_write_reg(dev, ICM20_GYRO_CONFIG, 0x18); 	    // 陀螺仪±2000dps量程 	
+	icm20608_write_reg(dev, ICM20_ACCEL_CONFIG, 0x18); 	// 加速度计±16G量程 
+	icm20608_write_reg(dev, ICM20_CONFIG, 0x04); 		    // 陀螺仪低通滤波BW=20Hz 
+	icm20608_write_reg(dev, ICM20_ACCEL_CONFIG2, 0x04);    // 加速度计低通滤波BW=21.2Hz 
+	icm20608_write_reg(dev, ICM20_PWR_MGMT_2, 0x00); 	    // 打开加速度计和陀螺仪所有轴 
+	icm20608_write_reg(dev, ICM20_LP_MODE_CFG, 0x00); 	    // 关闭低功耗 
+	icm20608_write_reg(dev, ICM20_FIFO_EN, 0x00);		    // 关闭FIFO	
+
     return 0;
 }
 
