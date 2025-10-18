@@ -83,6 +83,13 @@
 			gpios = <&gpio5 3 GPIO_ACTIVE_HIGH>;
 			states = <1300000 0x1 1400000 0x0>;
 		};
+
+		reg_vref_adc: regulator@2 {
+			compatible = "regulator-fixed";
+			regulator-name = "VREF_3V3";
+			regulator-min-microvolt = <3300000>;
+			regulator-max-microvolt = <3300000>;
+		};
 	};
 
 	sound {
@@ -431,6 +438,13 @@
 				/* 4.3 寸 RGB 屏幕,GT9147 */
 				MX6UL_PAD_SNVS_TAMPER9__GPIO5_IO09 		0x10B0 /* TSC_RST */
 				MX6UL_PAD_GPIO1_IO09__GPIO1_IO09		0x10B0 /* TSC_INT */
+			>;
+		};
+
+		/*you ADC1_CH1*/
+		pinctrl_adc1: adc1grp {
+			fsl,pins = <
+				MX6UL_PAD_GPIO1_IO01__GPIO1_IO01 0xb0
 			>;
 		};
 
@@ -925,4 +939,13 @@
 		compatible = "invensense,icm20608";
 		spi-max-frequency = <8000000>;				// 最大工作频率
 	};
+};
+
+/*you ADC1_CH1*/
+&adc1 {
+    pinctrl-names = "default";
+    pinctrl-0 = <&pinctrl_adc1>;
+    num-channels = <2>;
+    vref-supply = <&reg_vref_adc>;
+    status = "okay";
 };
