@@ -1,0 +1,27 @@
+/ {
+    regulators {
+        reg_vref_adc: regulator@2 {
+			compatible = "regulator-fixed";
+			regulator-name = "VREF_3V3";
+			regulator-min-microvolt = <3300000>;
+			regulator-max-microvolt = <3300000>;
+		};
+    };
+};
+
+&iomuxc {
+    pinctrl_adc1: adc1grp {
+        fsl,pins = <
+            MX6UL_PAD_GPIO1_IO01__GPIO1_IO01 0xb0
+        >;
+    };
+};
+
+/*you ADC1_CH1*/
+&adc1 {
+    pinctrl-names = "default";
+    pinctrl-0 = <&pinctrl_adc1>;
+    num-channels = <2>;
+    vref-supply = <&reg_vref_adc>;
+    status = "okay";
+};
