@@ -23,6 +23,8 @@
         "spinlock.h": "c",
         "miscdevice.h": "c",
         "jiffies.h": "c",
-        "delay.h": "c"
+        "delay.h": "c",
+        "platform_device.h": "c",
+        "interrupt.h": "c"
     },
 }
