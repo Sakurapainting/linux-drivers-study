@@ -943,6 +943,7 @@
 
 /*you ADC1_CH1*/
 &adc1 {
+	compatible = "fsl,imx6ul-adc", "fsl,vf610-adc", "fsl,imx6ull-adc";
     pinctrl-names = "default";
     pinctrl-0 = <&pinctrl_adc1>;
     num-channels = <2>;
