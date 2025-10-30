@@ -295,3 +295,45 @@ struct clk *clk_ptp;
 - 先调用函数 netif_carrier_off 通知内核，先关闭链路，phylib 会打开。
 - 调用函数 fec_enet_clk_enable 使能网络相关时钟。
 - 调用函数 register_netdev 注册 net_device
+
+## 网络驱动 - MDIO总线注册
+
+分为 MDIO 和 MDC 两根线，Linux内核专门为 MDIO 准备一个总线，叫做 MDIO 总线，采用 mii_bus 结构体表示，定义在 include/linux/phy.h 
+
+read 和 write 函数，这两个函数就是读/些 PHY 芯片的操作函数，不同的 SOC 其 MDIO 主控部分是不一样的，因此需要驱动编写人员去编写。
+
+of_mdiobus_register 函数有两个主要的功能，一个是通过 mdiobus_register函数向 Linux 内核注册 mdio 总线，另一个就是通过 of_mdiobus_register_phy 函数向内核注册PHY。
+
+## 网络驱动 - fec_drv_remove
+
+调用 unregister_netdev 函数注销前面注册的 net_device
+
+调用 fec_enet_mii_remove 函数来移除掉 MDIO 总线相关的内容，此函数会调用mdiobus_unregister 来注销掉 mii_bus，并且通过函数 mdiobus_free 释放掉 mii_bus
+
+调用 free_netdev 函数释放掉前面申请的 net_device。
+
+## 网络驱动 - fec_netdev_ops open
+
+调用 fec_enet_clk_enable 函数使能 enet 时钟。
+
+调用 fec_enet_alloc_buffers 函数申请环形缓冲区 buffer，此函数里面会调用fec_enet_alloc_rxq_buffers 和 fec_enet_alloc_txq_buffers 这两个函数分别实现发送队列和接收队列缓冲区的申请。
+
+重启网络，一般连接状态改变、传输超时或者配置网络的时候都会调用 fec_restart函数。
+
+打开网卡的时候调用 fec_enet_mii_probe 函数来探测并连接对应的 PHY 设备。
+
+调用 napi_enable 函数使能 NAPI 调度。
+
+调用 phy_start 函数开启 PHY 设备。
+
+调用 netif_tx_start_all_queues 函数来激活发送队列。
+
+## 网络驱动 - fec_netdev_ops close
+
+- 调用 phy_stop 函数停止 PHY 设备。
+- 调用 napi_disable 函数关闭 NAPI 调度。
+- 调用 netif_tx_disable 函数关闭 NAPI 的发送队列。
+- 调用 fec_stop 函数关闭 I.MX6ULL 的 ENET 外设。
+- 调用 phy_disconnect 函数断开与 PHY 设备的连接。
+- 调用 fec_enet_clk_enable 函数关闭 ENET 外设时钟。
+- 调用 fec_enet_free_buffers 函数释放发送和接收的环形缓冲区内存。
