@@ -448,6 +448,13 @@
 			>;
 		};
 
+		/*you PWM3*/
+		pinctrl_pwm3: pwm3grp {
+			fsl,pins = <
+				MX6UL_PAD_GPIO1_IO04__PWM3_OUT 0x110b0
+			>;
+		};
+
 		pinctrl_csi1: csi1grp {
 			fsl,pins = <
 				MX6UL_PAD_CSI_MCLK__CSI_MCLK		0x1b088
@@ -949,4 +956,13 @@
     num-channels = <2>;
     vref-supply = <&reg_vref_adc>;
     status = "okay";
+};
+
+/*you pwm3*/
+&pwm3 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_pwm3>;
+	clocks = <&clks IMX6UL_CLK_PWM3>,
+	        <&clks IMX6UL_CLK_PWM3>;
+	status = "okay";
 };
