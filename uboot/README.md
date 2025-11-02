@@ -132,3 +132,43 @@ bootm：用于启动 uImage
 
 **do_bootm_linux** 函数在 arch/arm/lib/bootm.c 文件中，次函数就是最终启动 Linux 内核的函数。
 
+# U-Boot 启动流程 精炼
+
+```
+1. _start (vectors.S)
+   └─ 中断向量表声明
+   
+2. reset (start.S)
+   ├─ 设置 SVC 模式，关闭 FIQ/IRQ
+   ├─ 设置中断向量
+   └─ 初始化 CP15 协处理器
+
+3. lowlevel_init (lowlevel_init.S)
+   ├─ 设置 SP 栈指针
+   └─ 初始化 R9 寄存器（存放 gd 地址）
+
+4. _main (crt0.S)
+   ├─ 分配 gd 结构体
+   └─ 调用 board_init_f
+
+5. board_init_f (board_f.c)
+   ├─ 执行 init_sequence_f 初始化表
+   ├─ 初始化外设（串口、定时器等）
+   └─ 计算重定位地址（DRAM 最高端）
+
+6. relocate_code (relocate.S)
+   ├─ 复制代码到 DRAM 高地址
+   ├─ 重定位向量表
+   └─ 跳转到新地址
+
+7. board_init_r (board_r.c)
+   ├─ 执行 init_sequence_r 初始化表
+   ├─ 完成剩余外设初始化
+   └─ 调用 run_main_loop
+
+8. main_loop (main.c)
+   ├─ autoboot_command：倒计时检测按键
+   │   ├─ 有按键 → cli_loop（进入命令行）
+   │   └─ 无按键 → 执行 bootcmd（启动内核）
+   └─ cli_loop：命令行交互循环
+```
