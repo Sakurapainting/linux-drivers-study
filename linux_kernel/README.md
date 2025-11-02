@@ -79,3 +79,25 @@ prepare_namespace();     // ← 挂载根文件系统
    └─ run_init_process("/sbin/init")
        └─ 启动用户态 init 程序
 ```
+
+---
+
+**stext**
+- 设置svc
+- 检查cpu支持
+- 检查dtb支持
+- 创建页表
+- 使能MMU
+
+**start_kernel**
+- 大量子系统初始化
+- kernel_init pid1
+- kthreadd pid2 负责内核进程调度
+- idle pid0
+
+**然后**
+- kernel_init 会初始化驱动模型和initcall(驱动注册的init函数)
+- 挂载根文件系统
+- 启动用户态Init程序
+
+---
