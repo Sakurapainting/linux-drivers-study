@@ -53,3 +53,29 @@ do_basic_setup();        // ← 基础设备、驱动初始化
 
 prepare_namespace();     // ← 挂载根文件系统
 ```
+
+# Linux Kernel 启动流程 精炼
+
+```
+1. stext (head.S)
+   ├─ 设置 SVC 模式
+   ├─ 检查 CPU 支持
+   ├─ 验证 DTB 设备树
+   ├─ 创建页表
+   └─ 使能 MMU → 跳转 __mmap_switched
+
+2. start_kernel (main.c)
+   ├─ 大量子系统初始化
+   ├─ kernel_thread(kernel_init) → 创建 init 进程（PID=1）
+   ├─ kernel_thread(kthreadd) → 创建 kthreadd 进程（PID=2）
+   └─ cpu_startup_entry() → 当前进程变为 idle（PID=0）
+
+3. kernel_init (init 进程)
+   ├─ do_basic_setup()
+   │   ├─ 驱动模型初始化
+   │   └─ 执行各级 initcall
+   ├─ prepare_namespace()
+   │   └─ 挂载根文件系统
+   └─ run_init_process("/sbin/init")
+       └─ 启动用户态 init 程序
+```
