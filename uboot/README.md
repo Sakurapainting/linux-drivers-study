@@ -99,7 +99,7 @@ display_options 函数中会打印 uboot 的版本信息等
 
 #### autoboot_command
 
-在 common/autoboot.c 中，其中会通过 Abortboot 函数判断在控制台打印的倒计时结束之前是否有按键按下，如果存在按键按下时，会执行 run_command_list 函数进入uboot系统，不执行 bootcmd → 直接进入 cli_loop。反之会返回bootcmd启动内核。
+在 common/autoboot.c 中，其中会通过 Abortboot 函数判断在控制台打印的倒计时结束之前是否有按键按下，如果存在按键按下时，会进入uboot系统，不执行 bootcmd → 直接进入 cli_loop。反之会返回bootcmd启动内核。
 
 "Hit any key to stop autoboot" → "按任意键中止自动启动"
 
