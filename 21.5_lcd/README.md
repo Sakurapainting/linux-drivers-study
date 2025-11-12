@@ -111,6 +111,12 @@ fb_info->fbops = &mxsfb_ops;
 	};
 ```
 
+通过 echo 往背光的 brightness 节点（通常路径为 /sys/class/backlight/<设备名>/brightness）写入的值，并非直接对应亮度的实际物理值，而是 brightness-levels 列表的索引。
+
+因此：
+- 最小值为 0（对应列表中的第一个元素 0）
+- 最大值为 7（对应列表中的最后一个元素 255，因索引从 0 开始，共 8 个元素，最大索引为 7）
+
 - 可以关闭 10 分钟熄屏功能，找到 `${sdk}/drivers/tty/vt/vt.c` ，找到 `blankinterval` 变量，改为 0 即可关闭：
 
 ```c
